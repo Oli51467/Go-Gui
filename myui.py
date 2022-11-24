@@ -1,7 +1,7 @@
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui, Qt
 import sys
 import qtawesome
-from PyQt5.QtWidgets import QVBoxLayout, QLabel, QWidget
+from PyQt5.QtWidgets import QLabel, QWidget, QLineEdit
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as fc
 
@@ -39,14 +39,89 @@ def draw_stars(ax):
             draw_star_points(ax, i, j)
 
 
-class Child(QWidget):
+class LoginWindow(QWidget):
     def __init__(self):
         super().__init__()
-        layout = QVBoxLayout()
-        lable_image = QLabel(self)
-        layout.addWidget(lable_image)
-        self.setFixedSize(300, 300)
-        self.setLayout(layout)
+        self.main_layout = QtWidgets.QGridLayout()
+        self.main_layout.setSpacing(0)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.label_image = QLabel(self)
+        self.label_username = QtWidgets.QLabel("用户名")
+        self.text_username = QtWidgets.QLineEdit()
+        self.label_password = QtWidgets.QLabel("密码")
+        self.text_password = QtWidgets.QLineEdit()
+        self.text_password.setEchoMode(QLineEdit.Password)
+        self.btn_login = QtWidgets.QPushButton(qtawesome.icon('mdi.language-go', color='#2c3a45'), "登陆")
+        self.btn_login.setFixedSize(200, 50)
+        png = QtGui.QPixmap('images/login_image.png')
+        self.label_image.setScaledContents(True)  # 需要在图片显示之前进行设置
+        self.label_image.setPixmap(png)
+        self.label_image.setFixedSize(300, 300)
+
+        self.right_widget = QtWidgets.QWidget()  # 右侧部件
+        self.right_widget.setObjectName('right_layout')
+        self.right_layout = QtWidgets.QGridLayout()
+        self.right_widget.setLayout(self.right_layout)
+        self.right_layout.addWidget(self.label_username, 0, 0, 1, 1)
+        self.right_layout.addWidget(self.text_username, 0, 1, 1, 3)
+        self.right_layout.addWidget(self.label_password, 1, 0, 1, 1)
+        self.right_layout.addWidget(self.text_password, 1, 1, 1, 3)
+        self.right_layout.addWidget(self.btn_login, 2, 1, 1, 2)
+
+        self.main_layout.addWidget(self.label_image, 0, 0, 1, 1)
+        self.main_layout.addWidget(self.right_widget, 0, 1, 1, 1)
+        self.setFixedSize(600, 300)
+        self.setLayout(self.main_layout)
+
+
+class RegisterWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.main_layout = QtWidgets.QGridLayout()
+        self.main_layout.setSpacing(0)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.label_image = QLabel(self)
+        self.label_username = QtWidgets.QLabel("用户名")
+        self.text_username = QtWidgets.QLineEdit()
+        self.label_phone = QtWidgets.QLabel("手机号")
+        self.text_phone = QtWidgets.QLineEdit()
+        self.label_email = QtWidgets.QLabel("邮箱")
+        self.text_email = QtWidgets.QLineEdit()
+        self.label_password = QtWidgets.QLabel("密码")
+        self.text_password = QtWidgets.QLineEdit()
+        self.text_password.setEchoMode(QLineEdit.Password)
+        self.label_password_confirm = QtWidgets.QLabel("确认密码")
+        self.text_password_confirm = QtWidgets.QLineEdit()
+        self.text_password_confirm.setEchoMode(QLineEdit.Password)
+        self.btn_login = QtWidgets.QPushButton(qtawesome.icon('mdi.language-go', color='#2c3a45'), "注册")
+        self.btn_login.setFixedSize(200, 50)
+        png = QtGui.QPixmap('images/register_image.png')
+        self.label_image.setScaledContents(True)  # 需要在图片显示之前进行设置
+        self.label_image.setPixmap(png)
+        self.label_image.setFixedSize(300, 300)
+
+        self.right_widget = QtWidgets.QWidget()  # 右侧部件
+        self.right_widget.setObjectName('right_layout')
+        self.right_layout = QtWidgets.QGridLayout()
+        self.right_widget.setLayout(self.right_layout)
+        self.right_layout.addWidget(self.label_username, 0, 0, 1, 1)
+        self.right_layout.addWidget(self.text_username, 0, 1, 1, 3)
+        self.right_layout.addWidget(self.label_phone, 1, 0, 1, 1)
+        self.right_layout.addWidget(self.text_phone, 1, 1, 1, 3)
+        self.right_layout.addWidget(self.label_email, 2, 0, 1, 1)
+        self.right_layout.addWidget(self.text_email, 2, 1, 1, 3)
+        self.right_layout.addWidget(self.label_password, 3, 0, 1, 1)
+        self.right_layout.addWidget(self.text_password, 3, 1, 1, 3)
+        self.right_layout.addWidget(self.label_password_confirm, 4, 0, 1, 1)
+        self.right_layout.addWidget(self.text_password_confirm, 4, 1, 1, 3)
+        self.right_layout.addWidget(self.btn_login, 5, 1, 1, 2)
+
+        self.main_layout.addWidget(self.label_image, 0, 0, 1, 1)
+        self.main_layout.addWidget(self.right_widget, 0, 1, 1, 1)
+        self.setFixedSize(600, 300)
+        self.setLayout(self.main_layout)
 
 
 class MainUi(QtWidgets.QMainWindow):
@@ -268,8 +343,9 @@ class MainUi(QtWidgets.QMainWindow):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     gui = MainUi()
-    child_window = Child()
-    gui.btn_login.clicked.connect(child_window.show)
-    gui.btn_register.clicked.connect(child_window.show)
+    login_window = LoginWindow()
+    register_window = RegisterWindow()
+    gui.btn_login.clicked.connect(login_window.show)
+    gui.btn_register.clicked.connect(register_window.show)
     gui.show()
     sys.exit(app.exec_())
