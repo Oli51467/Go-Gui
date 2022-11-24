@@ -99,9 +99,9 @@ if __name__ == '__main__':
     button1 = Button(buttonaxe, 'begin', color='grey', hovercolor='grey')
     data = {"user_id": "djn", "rules": "", "komi": "", "play": "1", "level": "p", "boardsize": "19"}
     resp = init_set(data)
-    # if not resp:
-    #     print('连接服务器失败')
-    #     exit(0)
-    # # 初始化成功 则开始
-    # if resp == 1000:
-    plt.show()
+    if not resp:
+        print('连接服务器失败')
+        exit(0)
+    # 初始化成功 则开始
+    if resp == 1000:
+        plt.show()
