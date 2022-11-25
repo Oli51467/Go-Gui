@@ -9,7 +9,7 @@ import config
 
 Base = declarative_base(config.configs['production'].engine)
 
-Base.metadata.create_all()  # 映射到数据库
+#Base.metadata.create_all()  # 映射到数据库
 Session = sessionmaker()
 
 
