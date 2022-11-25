@@ -7,6 +7,7 @@ class DevelopmentConfig:
 
 class ProductionConfig:
     REQUEST_IP = 'http://8.142.10.225:5001/'
+
     HOSTNAME = '8.142.10.225'
     DATABASE = 'gorobot'
     DB_PORT = 3306

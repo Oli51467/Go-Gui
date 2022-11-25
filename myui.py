@@ -1,42 +1,12 @@
-from PyQt5 import QtCore, QtWidgets, QtGui, Qt
+from PyQt5 import QtWidgets, QtGui
 import sys
 import qtawesome
 from PyQt5.QtWidgets import QLabel, QWidget, QLineEdit
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as fc
 
-from main import draw_grids, draw_star_points
-
-
-def change_color(*args):
-    args[0].setStyleSheet(
-        '''
-        *{background-color:#e6e6e6;}
-        ''')
-    for i in range(1, len(args)):
-        args[i].setStyleSheet(
-            '''
-            *{background-color:#ffffff;}
-            ''')
-
-
-def switch(*args):
-    args[0].setVisible(True)
-    for i in range(1, len(args)):
-        args[i].setVisible(False)
-
-
-# 画棋子
-def draw_stone(x, y, color, ax):
-    stone = ax.plot(x, y, 'o', markersize=20, markeredgecolor=(0, 0, 0), markerfacecolor=color, markeredgewidth=1)
-    return stone
-
-
-# 画星位
-def draw_stars(ax):
-    for i in range(3, 16, 6):
-        for j in range(3, 16, 6):
-            draw_star_points(ax, i, j)
+from funcs import draw_stars, change_color, switch
+from main import draw_grids
 
 
 class LoginWindow(QWidget):
@@ -82,7 +52,6 @@ class RegisterWindow(QWidget):
         self.main_layout.setSpacing(0)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.label_image = QLabel(self)
         self.label_username = QtWidgets.QLabel("用户名")
         self.text_username = QtWidgets.QLineEdit()
         self.label_phone = QtWidgets.QLabel("手机号")
@@ -97,6 +66,7 @@ class RegisterWindow(QWidget):
         self.text_password_confirm.setEchoMode(QLineEdit.Password)
         self.btn_login = QtWidgets.QPushButton(qtawesome.icon('mdi.language-go', color='#2c3a45'), "注册")
         self.btn_login.setFixedSize(200, 50)
+        self.label_image = QLabel(self)
         png = QtGui.QPixmap('images/register_image.png')
         self.label_image.setScaledContents(True)  # 需要在图片显示之前进行设置
         self.label_image.setPixmap(png)
@@ -168,6 +138,38 @@ class MainUi(QtWidgets.QMainWindow):
         self.left_layout3 = QtWidgets.QGridLayout()  # 创建左下侧部件的网格布局层-占位
         self.left_widget3.setLayout(self.left_layout3)  # 设置左下侧部件布局为网格-占位
 
+        self.index_image = QLabel(self)
+        png = QtGui.QPixmap('images/index.png')
+        self.index_image.setScaledContents(True)  # 需要在图片显示之前进行设置
+        self.index_image.setPixmap(png)
+        self.index_image.setFixedSize(300, 300)
+
+        # 按钮
+        self.left_button_1 = QtWidgets.QPushButton(qtawesome.icon('mdi6.axe-battle', color='#2c3a45'), "对弈")
+        self.left_button_1.setObjectName('play')
+        self.left_button_2 = QtWidgets.QPushButton(qtawesome.icon('fa.database', color='#2c3a45'), "棋谱")
+        self.left_button_2.setObjectName('game')
+
+        self.btn_login = QtWidgets.QPushButton(qtawesome.icon('mdi6.axe-battle', color='#2c3a45'), "登陆")
+        self.btn_register = QtWidgets.QPushButton(qtawesome.icon('mdi6.axe-battle', color='#2c3a45'), "注册")
+        self.btn_login.setFixedSize(120, 70)
+        self.btn_register.setFixedSize(120, 70)
+        self.left_layout1.addWidget(self.btn_login, 0, 1, 1, 1)
+        self.left_layout1.addWidget(self.btn_register, 0, 2, 1, 1)
+
+        self.left_layout2.addWidget(self.left_button_1, 0, 0, 1, 3)
+        self.left_layout2.addWidget(self.left_button_2, 1, 0, 1, 3)
+
+        self.left_layout3.addWidget(self.index_image, 0, 0, 1, 1)
+
+        self.left_username = QtWidgets.QLabel("Gobot")
+        self.left_username.setObjectName('App')
+        self.left_out = QtWidgets.QPushButton(qtawesome.icon('fa.sign-out', color='#808080'), "退出")
+        self.left_out.setObjectName('left_out')
+        self.left_out.clicked.connect(self.close)  # 点击按钮之后关闭窗口
+        self.top_layout.addWidget(self.left_username, 0, 0, 1, 15)
+        self.top_layout.addWidget(self.left_out, 0, 16, 1, 1)
+
         self.btn_play = QtWidgets.QPushButton(qtawesome.icon('mdi.language-go', color='#2c3a45'), "开始下棋")
         self.btn_count = QtWidgets.QPushButton(qtawesome.icon('msc.git-pull-request', color='#2c3a45'), "申请数子")
         self.btn_resign = QtWidgets.QPushButton(qtawesome.icon('mdi6.close-box', color='#2c3a45'), "认输")
@@ -205,32 +207,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.main_layout.addWidget(self.game_record_widget, 1, 3, 12, 9)  # 右侧部件在第1行第2列，占12行9列
         self.main_layout.addWidget(self.top_widget, 0, 0, 1, 12)  # 头部侧部件在第0行第0列，占1行11列
         self.setCentralWidget(self.main_widget)  # 设置窗口主部件
-
-        self.left_out = QtWidgets.QPushButton(qtawesome.icon('fa.sign-out', color='#808080'), "退出")
-        self.left_out.setObjectName('left_out')
-        self.left_out.clicked.connect(self.close)  # 点击按钮之后关闭窗口
-
-        self.left_username = QtWidgets.QLabel("Gobot")
-        self.left_username.setObjectName('App')
-
-        # 按钮
-        self.left_button_1 = QtWidgets.QPushButton(qtawesome.icon('mdi6.axe-battle', color='#2c3a45'), "对弈")
-        self.left_button_1.setObjectName('play')
-        self.left_button_2 = QtWidgets.QPushButton(qtawesome.icon('fa.database', color='#2c3a45'), "棋谱")
-        self.left_button_2.setObjectName('game')
-
-        self.btn_login = QtWidgets.QPushButton(qtawesome.icon('mdi6.axe-battle', color='#2c3a45'), "登陆")
-        self.btn_register = QtWidgets.QPushButton(qtawesome.icon('mdi6.axe-battle', color='#2c3a45'), "注册")
-        self.btn_login.setFixedSize(120, 70)
-        self.btn_register.setFixedSize(120, 70)
-        self.left_layout1.addWidget(self.btn_login, 0, 1, 1, 1)
-        self.left_layout1.addWidget(self.btn_register, 0, 2, 1, 1)
-
-        self.left_layout2.addWidget(self.left_button_1, 0, 0, 1, 3)
-        self.left_layout2.addWidget(self.left_button_2, 1, 0, 1, 3)
-
-        self.top_layout.addWidget(self.left_username, 0, 0, 1, 15)
-        self.top_layout.addWidget(self.left_out, 0, 16, 1, 1)
 
         self.left_layout.setVerticalSpacing(0)
         self.main_layout.setSpacing(0)
@@ -295,7 +271,7 @@ class MainUi(QtWidgets.QMainWindow):
             ''')
         self.left_widget3.setStyleSheet(
             '''
-            QPushButton:hover{background:#e6e6e6;}
+            *{background-color:#fafafa;}
             ''')
         self.top_widget.setStyleSheet(
             '''

@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 import config
 
-Base = declarative_base(config.configs['development'].engine)
+Base = declarative_base(config.configs['production'].engine)
 
 Base.metadata.create_all()  # 映射到数据库
 Session = sessionmaker()
@@ -24,7 +24,7 @@ class User(Base):
     email = Column(type_=String(64), nullable=True)
     level = Column(type_=Integer, nullable=False, default=1)
     avatar = Column(type_=String(512), nullable=True, default="")
-    platform = Column(type_=String(50), nullable=False, default="带机械臂")
+    platform = Column(type_=String(50), nullable=False, default="陪伴版")
     win = Column(type_=Integer, nullable=False, default=0)
     lose = Column(type_=Integer, nullable=False, default=0)
     last_modify_time = Column(type_=Integer, nullable=False, default=datetime.datetime.now)
@@ -62,17 +62,34 @@ class MyEncoder(json.JSONEncoder):
 
 
 # DAO层 添加一个用户
-def v1_add_user(user_id, user_name, phone_number, email):
+def v2_add_user(user_id, user_name, phone_number, email, password):
     session = Session()
-    add_info = User(user_id=str(user_id), user_name=str(user_name), phone=str(phone_number), email=str(email), platform="薄膜按键")
+    add_info = User(user_id=str(user_id), user_name=str(user_name), phone=str(phone_number), email=str(email), password=str(password), platform="陪伴版")
     session.add(add_info)
     session.commit()
+
+
+# DAO层 根据用户名查找用户信息
+def find_by_username(user_name):
+    session = Session()
+    user = session.query(User).filter_by(user_name=user_name).first()
+    session.close()
+    return user
 
 
 # DAO层 根据用户信息查找用户信息
 def find_by_phone_number_or_email(phone_number, email):
     session = Session()
     user = session.query(User).filter(or_(User.phone == phone_number, User.email == email)).first()
+    session.close()
+    return user
+
+
+# DAO层 根据用户信息查找是否被注册
+def check_information_exist(username, phone_number, email, userid):
+    session = Session()
+    user = session.query(User).filter(or_(User.user_name == username, User.phone == phone_number, User.email == email),
+                                      User.user_id != userid).first()
     session.close()
     return user
 
