@@ -2,6 +2,8 @@ import re
 
 import db_operation
 
+LEVEL = 0
+PLAYER = 1
 
 def change_color(*args):
     args[0].setStyleSheet(

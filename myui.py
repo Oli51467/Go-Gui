@@ -1,14 +1,16 @@
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets, QtGui
 import sys
 import qtawesome
 from PyQt5.QtWidgets import QLabel, QWidget, QLineEdit, QMessageBox, QComboBox, QListView
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as fc
 
+import funcs
 from funcs import draw_stars, change_color, switch, check_information_correct
 from main import draw_grids
 
 global USER_NAME
+INIT = False
 levels = ["1段", "2段", "3段", "4段", "5段"]
 
 
@@ -122,8 +124,25 @@ class MainUi(QtWidgets.QMainWindow):
     def begin_play(self):
         self.play_setting_widget.setVisible(False)
         self.play_func_widget.setVisible(True)
+        self.left_button_2.setEnabled(False)
+        self.left_button_1.setEnabled(False)
+        print(funcs.LEVEL)
+        print(funcs.PLAYER)
+
+    def end_play(self):
+        message = QMessageBox.question(self, '退出', '你确定要认输吗?', QMessageBox.Yes | QMessageBox.No,
+                                       QMessageBox.No)  # "退出"代表的是弹出框的标题,"你确认退出.."表示弹出框的内容
+        if message == QMessageBox.Yes:
+            self.play_func_widget.setVisible(False)
+            self.play_setting_widget.setVisible(True)
+            self.left_button_1.setEnabled(True)
+            self.left_button_2.setEnabled(True)
 
     def change_side(self, down, up):
+        if down == self.btn_choose_black:
+            funcs.PLAYER = 1
+        else:
+            funcs.PLAYER = 2
         down.setDown(True)
         down.setStyleSheet(
             '''
@@ -137,8 +156,8 @@ class MainUi(QtWidgets.QMainWindow):
             '''
         )
 
-    def print_value(self, i):
-        print(i)
+    def change_level(self, i):
+        funcs.LEVEL = i
 
     def init_ui(self):
         self.fig = plt.Figure()  # 公共属性figure
@@ -169,6 +188,12 @@ class MainUi(QtWidgets.QMainWindow):
         self.left_widget_enter.setObjectName('enter_widget')
         self.left_layout_enter = QtWidgets.QGridLayout()  # 创建左上侧部件的网格布局层
         self.left_widget_enter.setLayout(self.left_layout_enter)  # 设置左上侧部件布局为网格
+        png = QtGui.QPixmap('images/code.jpg')
+        self.label_image = QLabel(self)
+        self.label_image.setScaledContents(True)  # 需要在图片显示之前进行设置
+        self.label_image.setPixmap(png)
+        self.label_image.setFixedSize(180, 180)
+        self.left_layout_enter.addWidget(self.label_image, 0, 0, 1, 1)
 
         # 登陆时显示用户信息
         self.left_widget_user_info = QtWidgets.QWidget()  # 创建左上侧部件
@@ -232,6 +257,7 @@ class MainUi(QtWidgets.QMainWindow):
         # 右边栏 下棋时的按钮
         self.btn_count = QtWidgets.QPushButton(qtawesome.icon('msc.git-pull-request', color='#2c3a45'), "申请数子")
         self.btn_resign = QtWidgets.QPushButton(qtawesome.icon('mdi6.close-box', color='#2c3a45'), "认输")
+        self.btn_resign.clicked.connect(lambda: self.end_play())
         self.btn_peace = QtWidgets.QPushButton(qtawesome.icon('ph.handshake-light', color='#2c3a45'), "和棋")
         self.btn_count.setFixedSize(160, 70)
         self.btn_resign.setFixedSize(160, 70)
@@ -264,8 +290,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.comboBox_level.setStyleSheet("QAbstractItemView::item {height: 70px;}")
         self.comboBox_level.setView(QListView())
         # 信号
-        self.comboBox_level.currentIndexChanged[str].connect(self.print_value)  # 条目发生改变，发射信号，传递条目内容
-        self.comboBox_level.currentIndexChanged[int].connect(self.print_value)  # 条目发生改变，发射信号，传递条目索引
+        #self.comboBox_level.currentIndexChanged[str].connect(self.change_level)  # 条目发生改变，发射信号，传递条目内容
+        self.comboBox_level.currentIndexChanged[int].connect(self.change_level)  # 条目发生改变，发射信号，传递条目索引
 
         self.btn_choose_black = QtWidgets.QPushButton("执黑")
         self.btn_choose_black.setDown(True)
