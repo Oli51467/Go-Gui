@@ -1,7 +1,7 @@
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 import qtawesome
-from PyQt5.QtWidgets import QLabel, QWidget, QLineEdit, QMessageBox
+from PyQt5.QtWidgets import QLabel, QWidget, QLineEdit, QMessageBox, QComboBox, QListView
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as fc
 
@@ -9,6 +9,7 @@ from funcs import draw_stars, change_color, switch, check_information_correct
 from main import draw_grids
 
 global USER_NAME
+levels = ["1段", "2段", "3段", "4段", "5段"]
 
 
 def login(self, user_name, password):
@@ -122,6 +123,23 @@ class MainUi(QtWidgets.QMainWindow):
         self.play_setting_widget.setVisible(False)
         self.play_func_widget.setVisible(True)
 
+    def change_side(self, down, up):
+        down.setDown(True)
+        down.setStyleSheet(
+            '''
+            background-color:#999999;
+            '''
+        )
+        up.setDown(False)
+        up.setStyleSheet(
+            '''
+            background-color: #ffffff;
+            '''
+        )
+
+    def print_value(self, i):
+        print(i)
+
     def init_ui(self):
         self.fig = plt.Figure()  # 公共属性figure
         self.canvas = fc(self.fig)  # 新建画布，在画布上构建matplotlib图像
@@ -175,7 +193,7 @@ class MainUi(QtWidgets.QMainWindow):
         png = QtGui.QPixmap('images/index.png')
         self.index_image.setScaledContents(True)  # 需要在图片显示之前进行设置
         self.index_image.setPixmap(png)
-        self.index_image.setFixedSize(300, 300)
+        self.index_image.setFixedSize(200, 200)
 
         # 按钮
         self.left_button_1 = QtWidgets.QPushButton(qtawesome.icon('mdi6.axe-battle', color='#2c3a45'), "对弈")
@@ -183,15 +201,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.left_button_2 = QtWidgets.QPushButton(qtawesome.icon('fa.database', color='#2c3a45'), "棋谱")
         self.left_button_2.setObjectName('game')
 
-        self.btn_login = QtWidgets.QPushButton(qtawesome.icon('mdi6.axe-battle', color='#2c3a45'), "登陆")
-        self.btn_register = QtWidgets.QPushButton(qtawesome.icon('mdi6.axe-battle', color='#2c3a45'), "注册")
-        self.btn_login.setFixedSize(120, 70)
-        self.btn_register.setFixedSize(120, 70)
-        self.left_layout_enter.addWidget(self.btn_login, 0, 1, 1, 1)
-        self.left_layout_enter.addWidget(self.btn_register, 0, 2, 1, 1)
-
-        self.left_layout2.addWidget(self.left_button_1, 0, 0, 1, 3)
-        self.left_layout2.addWidget(self.left_button_2, 1, 0, 1, 3)
+        self.left_layout2.addWidget(self.left_button_1, 0, 0, 1, 2)
+        self.left_layout2.addWidget(self.left_button_2, 1, 0, 1, 2)
 
         self.left_layout3.addWidget(self.index_image, 0, 0, 1, 1)
 
@@ -208,7 +219,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.play_widget.setObjectName('play_widget')
         self.play_layout = QtWidgets.QGridLayout()
         self.play_widget.setLayout(self.play_layout)  # 设置右侧部件布局为网格
-        self.play_layout.addWidget(self.canvas, 0, 0, 12, 10)  # 添加棋盘画布
+        self.play_layout.addWidget(self.canvas, 0, 0, 9, 9)  # 添加棋盘画布
 
         self.game_record_widget = QtWidgets.QWidget()
         self.game_record_widget.setObjectName('game_record_widget')
@@ -237,34 +248,65 @@ class MainUi(QtWidgets.QMainWindow):
 
         # 右边栏 下棋前的设置
         self.label_rules = QLabel("规则")
+        self.label_level = QLabel("选择段位")
         self.edit_rules = QLineEdit("分先")
+        self.edit_rules.setFixedWidth(250)
         self.edit_rules.setReadOnly(True)
+        self.edit_size = QLineEdit("19路棋盘")
+        self.edit_size.setFixedWidth(250)
+        self.edit_size.setReadOnly(True)
         self.edit_komi = QLineEdit("黑贴3又3/4子")
+        self.edit_komi.setFixedWidth(250)
         self.edit_komi.setReadOnly(True)
+        self.comboBox_level = QComboBox(self)
+        self.comboBox_level.addItems(levels)
+        self.comboBox_level.setFixedSize(250, 50)
+        self.comboBox_level.setStyleSheet("QAbstractItemView::item {height: 70px;}")
+        self.comboBox_level.setView(QListView())
+        # 信号
+        self.comboBox_level.currentIndexChanged[str].connect(self.print_value)  # 条目发生改变，发射信号，传递条目内容
+        self.comboBox_level.currentIndexChanged[int].connect(self.print_value)  # 条目发生改变，发射信号，传递条目索引
 
+        self.btn_choose_black = QtWidgets.QPushButton("执黑")
+        self.btn_choose_black.setDown(True)
+        self.btn_choose_black.setFixedSize(250, 50)
+        self.btn_choose_white = QtWidgets.QPushButton("执白")
+        self.btn_choose_white.setFixedSize(250, 50)
+        self.btn_choose_black.clicked.connect(
+            lambda: self.change_side(down=self.btn_choose_black, up=self.btn_choose_white))
+        self.btn_choose_white.clicked.connect(
+            lambda: self.change_side(down=self.btn_choose_white, up=self.btn_choose_black))
         self.btn_play = QtWidgets.QPushButton(qtawesome.icon('mdi.language-go', color='#2c3a45'), "开始下棋")
-        self.btn_play.setFixedSize(160, 70)
-        #self.play_widget.setFixedSize(700, 700)
+        self.btn_play.setFixedSize(250, 70)
+        self.play_widget.setFixedSize(700, 700)
 
         self.play_setting_widget = QtWidgets.QWidget()
         self.play_setting_widget.setObjectName('play_setting_widget')
-        self.play_setting_layout = QtWidgets.QGridLayout()
+        self.play_setting_layout = QtWidgets.QVBoxLayout()
+        self.play_setting_layout.setSpacing(25)
+        self.play_setting_layout.setContentsMargins(20, 50, 0, 0)
         self.play_setting_widget.setLayout(self.play_setting_layout)
-        self.play_setting_layout.addWidget(self.label_rules, 1, 0, 1, 1)
-        self.play_setting_layout.addWidget(self.edit_rules, 1, 1, 1, 1)
-        self.play_setting_layout.addWidget(self.edit_komi, 2, 1, 1, 1)
-        self.play_setting_layout.addWidget(self.btn_play, 10, 1, 1, 1)
+        self.play_setting_layout.addWidget(self.label_rules)
+        self.play_setting_layout.addWidget(self.edit_size)
+        self.play_setting_layout.addWidget(self.edit_rules)
+        self.play_setting_layout.addWidget(self.edit_komi)
+        self.play_setting_layout.addWidget(self.btn_choose_black)
+        self.play_setting_layout.addWidget(self.btn_choose_white)
+        self.play_setting_layout.addWidget(self.label_level)
+        self.play_setting_layout.addWidget(self.comboBox_level)
+        self.play_setting_layout.addWidget(self.btn_play)
+        self.play_setting_layout.addStretch()
         self.btn_play.clicked.connect(self.begin_play)
 
-        self.left_layout.addWidget(self.left_widget_enter, 0, 0, 3, 3)  # 左侧部件在第0行第0列，占3行3列
-        self.left_layout.addWidget(self.left_widget2, 3, 0, 2, 3)  # 左侧部件在第3行第0列，占2行3列
-        self.left_layout.addWidget(self.left_widget3, 9, 0, 6, 3)  # 左侧部件在第9行第0列，占6行3列
+        self.left_layout.addWidget(self.left_widget_enter, 0, 0, 3, 2)  # 左侧部件在第0行第0列，占3行3列
+        self.left_layout.addWidget(self.left_widget2, 3, 0, 2, 2)  # 左侧部件在第3行第0列，占2行3列
+        self.left_layout.addWidget(self.left_widget3, 9, 0, 6, 2)  # 左侧部件在第9行第0列，占6行3列
 
-        self.main_layout.addWidget(self.left_widget, 1, 0, 12, 3)  # 左侧部件在第1行第0列，占12行2列
-        self.main_layout.addWidget(self.play_widget, 1, 3, 12, 7)  # 右侧部件在第1行第3列，占12行9列
-        self.main_layout.addWidget(self.game_record_widget, 1, 3, 12, 7)  # 右侧部件在第1行第2列，占12行9列
-        self.main_layout.addWidget(self.play_func_widget, 1, 10, 12, 2)
-        self.main_layout.addWidget(self.play_setting_widget, 1, 10, 12, 2)
+        self.main_layout.addWidget(self.left_widget, 1, 0, 12, 2)  # 左侧部件在第1行第0列，占12行2列
+        self.main_layout.addWidget(self.play_widget, 1, 2, 12, 7)  # 右侧部件在第1行第3列，占12行9列
+        self.main_layout.addWidget(self.game_record_widget, 1, 2, 12, 7)  # 右侧部件在第1行第2列，占12行9列
+        self.main_layout.addWidget(self.play_func_widget, 1, 9, 12, 3)
+        self.main_layout.addWidget(self.play_setting_widget, 1, 9, 12, 3)
         self.main_layout.addWidget(self.top_widget, 0, 0, 1, 12)  # 头部侧部件在第0行第0列，占1行11列
         self.setCentralWidget(self.main_widget)  # 设置窗口主部件
 
@@ -289,13 +331,24 @@ class MainUi(QtWidgets.QMainWindow):
 
         self.left_button_1.clicked.connect(lambda: switch(self.play_widget, self.game_record_widget))
         self.left_button_1.clicked.connect(lambda: switch(self.play_setting_widget))
-        self.left_button_2.clicked.connect(lambda: switch(self.game_record_widget, self.play_widget, self.play_func_widget,
-                                                          self.play_setting_widget))
+        self.left_button_2.clicked.connect(
+            lambda: switch(self.game_record_widget, self.play_widget, self.play_func_widget,
+                           self.play_setting_widget))
 
         self.left_button_1.setStyleSheet(
             '''
             *{background-color:#e6e6e6;}
             ''')
+        self.btn_choose_black.setStyleSheet(
+            '''
+            background-color:#999999;
+            '''
+        )
+        self.btn_play.setStyleSheet(
+            '''
+            background-color:#31a420;
+            '''
+        )
 
         self.play_widget.setStyleSheet(
             '''
@@ -329,7 +382,12 @@ class MainUi(QtWidgets.QMainWindow):
             ''')
         self.left_widget2.setStyleSheet(
             '''
-            QPushButton:hover{background:#e6e6e6;}
+            QPushButton {
+                font-size: 24px;
+            }
+            QPushButton:hover{
+                background:#e6e6e6;
+            }
             ''')
         self.left_widget3.setStyleSheet(
             '''
@@ -339,37 +397,59 @@ class MainUi(QtWidgets.QMainWindow):
             '''
             *{background-color:#303030;}
             QLabel{
-            color:#ffffff;
-            border:none;
-            font-weight:600;
-            font-size:16px;
+                color:#ffffff;
+                border:none;
+                font-weight:600;
+                font-size:16px;
              }
             QPushButton{
-            color:#ffffff;
-            border:none;
-            font-weight:600;
-            font-size:16px;
+                color:#ffffff;
+                border:none;
+                font-weight:600;
+                font-size:16px;
              }
             ''')
         self.left_widget.setStyleSheet(
             '''
             *{background-color:#fafafa;}
             QPushButton{
-            border:none;
-            font-size:15px;
-            text-align:left;
-            padding-left:30px;
-            height:70px;
+                border:none;
+                font-size:15px;
+                text-align:left;
+                padding-left:30px;
+                height:70px;
              }
-            QPushButton:hover{background:red;}
+            QPushButton:hover{
+                background:red;
+            }
             ''')
+        self.play_setting_widget.setStyleSheet(
+            '''
+            QLabel {
+                font:bold;
+            }
+            QLineEdit {
+                font-size: 24px;
+            }
+            '''
+        )
         self.left_out.setStyleSheet(
             '''
-            QPushButton{ text-align:right;padding-right:30px;color:#808080;font-size:14px;}
+            QPushButton { 
+                text-align:right;
+                padding-right:30px;
+                color:#808080;
+                font-size:14px;
+            }
             ''')
         self.left_username.setStyleSheet(
             '''
-            QPushButton{ text-align:left;padding-left:30px;color:#ffffff;font-size:16px;}
+            QPushButton { 
+                text-align:left;
+                padding-left:30px;
+                color:#ffffff;
+                font-size:16px;
+            }
             ''')
 
         self.play_widget.setStyleSheet(
@@ -383,7 +463,5 @@ if __name__ == '__main__':
     gui = MainUi()
     login_window = LoginWindow()
     register_window = RegisterWindow()
-    gui.btn_login.clicked.connect(login_window.show)
-    gui.btn_register.clicked.connect(register_window.show)
     gui.show()
     sys.exit(app.exec_())
