@@ -50,7 +50,7 @@ def draw_stars(ax):
 
 # 画星位
 def draw_star_points(ax, x, y):
-    ax.plot(x, y, 'o', markersize=8, markeredgecolor=(0, 0, 0), markerfacecolor='k', markeredgewidth=1)
+    ax.plot(x, y, 'o', markersize=5, markeredgecolor=(0, 0, 0), markerfacecolor='k', markeredgewidth=1)
 
 
 def check_email_format(email):
