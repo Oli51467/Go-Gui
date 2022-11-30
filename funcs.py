@@ -1,9 +1,11 @@
+import json
 import re
 
 import db_operation
 
 LEVEL = 0
 PLAYER = 1
+
 
 def change_color(*args):
     args[0].setStyleSheet(
@@ -17,10 +19,20 @@ def change_color(*args):
             ''')
 
 
-def switch(*args):
-    args[0].setVisible(True)
-    for i in range(1, len(args)):
-        args[i].setVisible(False)
+def switch2play(window):
+    window.game_record_widget.setVisible(False)
+    window.select_record_widget.setVisible(False)
+    window.play_widget.setVisible(True)
+    window.play_func_widget.setVisible(False)
+    window.play_setting_widget.setVisible(True)
+
+
+def switch2review(window):
+    window.game_record_widget.setVisible(True)
+    window.select_record_widget.setVisible(True)
+    window.play_widget.setVisible(False)
+    window.play_func_widget.setVisible(False)
+    window.play_setting_widget.setVisible(False)
 
 
 # 画棋子
@@ -77,3 +89,12 @@ def check_information_correct(user_name, password):
         return "success"
     else:
         return "wrongPassword"
+
+
+def get_games(user_name):
+    game_result = db_operation.get_all_games(user_name)
+    response_body = []
+    for o in game_result:
+        obj = {"id": o.id, "play_info": o.play_info, "result": o.result, "code": o.code}
+        response_body.append(obj)
+    return response_body
