@@ -129,6 +129,9 @@ class MainUi(QtWidgets.QMainWindow):
                 if self.stones_plot_review[i, j] is not None:
                     self.stones_plot_review[i, j].pop().remove()
                     self.stones_plot_review[i, j] = None
+                if self.red_point_plot[i, j] is not None:
+                    self.red_point_plot[i, j].pop().remove()
+                    self.red_point_plot[i, j] = None
         self.canvas_record.draw()
 
     # 选择一个棋谱的点击事件
@@ -171,7 +174,7 @@ class MainUi(QtWidgets.QMainWindow):
                                code_map[self.game_item_row][self.cur_pointer][1], player)   # 在棋盘上走棋
         self.board_review.next_player()
         index_x, index_y = code_map[self.game_item_row][self.cur_pointer][0], code_map[self.game_item_row][self.cur_pointer][1]
-        print(index_x, index_y)
+        # print(index_x, index_y)
         self.stones_plot_review[index_x, index_y] = funcs.draw_stone(index_y - 1, 19 - index_x,
                                                                      'k' if player.get_identifier() == 1 else 'w',
                                                                      self.ax_record)    # 将落子位置关联嵌入
