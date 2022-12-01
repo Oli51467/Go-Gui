@@ -2,9 +2,11 @@ import json
 import re
 
 import db_operation
+import go.utils
 
 LEVEL = 0
 PLAYER = 1
+ROW_CLICK = 0
 
 
 def change_color(*args):
@@ -98,3 +100,51 @@ def get_games(user_name):
         obj = {"id": o.id, "play_info": o.play_info, "result": o.result, "code": o.code}
         response_body.append(obj)
     return response_body
+
+
+def transform_indexes(index):
+    alpha, beta = index[1], index[0]
+    count = 1
+    for c in range(ord('A'), ord('T')):
+        c_ = chr(c)
+        if beta == c_:
+            break
+        count += 1
+    cnt = 1
+    for c in range(ord('A'), ord('T')):
+        c_ = chr(c)
+        if c_ == alpha:
+            break
+        cnt += 1
+    return count, cnt
+
+
+def get_black_moves_from_code(sgf):
+    moves = re.findall(r";B\[(.+?)]", sgf)
+    result = []
+    for move in moves:
+        result.append(transform_indexes(move.upper()))
+    return result
+
+
+def get_white_moves_from_code(sgf):
+    moves = re.findall(r";W\[(.+?)]", sgf)
+    result = []
+    for move in moves:
+        result.append(transform_indexes(move.upper()))
+    return result
+
+
+def get_all_moves_and_merge(sgf):
+    black_moves = get_black_moves_from_code(sgf)
+    white_moves = get_white_moves_from_code(sgf)
+    i, j = 0, 0
+    result = []
+    while i < len(black_moves) and j < len(white_moves):
+        if i <= j:
+            result.append(black_moves[i])
+            i += 1
+        else:
+            result.append(white_moves[j])
+            j += 1
+    return result

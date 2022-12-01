@@ -16,6 +16,7 @@ global USER_NAME
 INIT = False
 levels = ["1段", "2段", "3段", "4段", "5段"]
 games = []
+code_map = []
 WINDOW_WIDTH, WINDOW_HEIGHT = 800, 500
 BUTTON_HEIGHT, BUTTON_WIDTH = 40, 150
 CENTER_HEIGHT, CENTER_WIDTH = 460, 460
@@ -93,6 +94,15 @@ class MainUi(QtWidgets.QMainWindow):
 
     def change_level(self, i):
         funcs.LEVEL = i
+
+    def on_game_click(self, Item=None):
+        # 如果单元格对象为空
+        if Item is None:
+            return
+        else:
+            funcs.ROW_CLICK = Item.row()  # 获取行数
+            print(code_map[Item.row()])
+            self.game_record_table_view.setVisible(False)
 
     def init_ui(self):
         self.timer = QTimer(self)
@@ -246,6 +256,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.select_record_widget.setLayout(self.select_record_layout)  # 设置右侧部件布局为网格
         self.select_record_widget.setVisible(False)
 
+        # QTableWidget在右边展示数据库里的棋谱
         self.game_record_table_view = QTableWidget()
         self.game_record_table_view.verticalHeader().setVisible(False)
         self.game_record_table_view.horizontalHeader().setVisible(False)
@@ -253,18 +264,21 @@ class MainUi(QtWidgets.QMainWindow):
         self.game_record_table_view.setColumnCount(1)
         self.game_record_table_view.setRowCount(5)
         self.game_record_table_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.game_record_table_view.itemClicked.connect(self.on_game_click)
         for index in range(len(games)):
-            item = QTableWidgetItem(games[index]['play_info'] + "  " + games[index]['result'])
+            item = QTableWidgetItem(games[index]['play_info'] + "\n" + games[index]['result'])
             # 设置每个位置的文本值
-            self.game_record_table_view.setItem(index - 1, 1, item)
+            code_map.append(funcs.get_all_moves_and_merge(games[index]['code']))
+            self.game_record_table_view.setItem(index, 0, item)
         # 水平方向标签拓展剩下的窗口部分，填满表格
         self.game_record_table_view.horizontalHeader().setStretchLastSection(True)
         # 水平方向，表格大小拓展到适当的尺寸
         self.game_record_table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.game_record_table_view.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.game_record_table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        self.game_record_table_view.resizeColumnsToContents()
+        self.game_record_table_view.resizeRowsToContents()
         self.game_record_table_view.setVerticalScrollBarPolicy(0)
-        self.game_record_table_view.setFixedWidth(185)
+        self.game_record_table_view.setFixedWidth(180)
         self.select_record_layout.addWidget(self.game_record_table_view, 0, 1, 1, 1)
 
         self.btn_choose_black = QtWidgets.QPushButton("执黑")
@@ -325,7 +339,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.left_layout2.setContentsMargins(0, 0, 0, 0)
         self.left_layout3.setContentsMargins(0, 0, 0, 0)
         self.game_record_table_view.setContentsMargins(0, 0, 0, 0)
-        self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 隐藏边框
+        #self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 隐藏边框
 
         self.left_button_1.clicked.connect(
             lambda: change_color(self.left_button_1, self.left_button_2))
