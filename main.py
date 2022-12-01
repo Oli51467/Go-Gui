@@ -35,7 +35,7 @@ def draw_star_points(ax, x, y):
 
 # 画棋子
 def draw_stone(x, y, color):
-    stone = ax.plot(x, y, 'o', markersize=20, markeredgecolor=(0, 0, 0), markerfacecolor=color, markeredgewidth=1)
+    stone = ax.plot(x, y, 'o', markersize=10, markeredgecolor=(0, 0, 0), markerfacecolor=color, markeredgewidth=1)
     return stone
 
 

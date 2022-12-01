@@ -112,10 +112,8 @@ class Board:
         else:
             if self.actualPlayer == self.P1:
                 self.actualPlayer = self.P2
-                print('Changing player for P2')
             else:
                 self.actualPlayer = self.P1
-                print('Changing player for P1')
 
     def free_intersections(self):
         for i in range(1, self.width):
@@ -268,6 +266,7 @@ class GameTurn:
             self.board_state = [[0 for _ in range(args[0] + 1)] for _ in range(args[1] + 1)]
             self.x, self.y = -1, -1
             self.hash_code = get_deep_hash(self.board_state)
+            self.captured_stones = set()
         elif len(args) == 5:
             width = len(args[0].board_state)
             height = len(args[0].board_state[0])
@@ -280,6 +279,7 @@ class GameTurn:
             for point in args[4]:
                 self.board_state[point.x][point.y] = 0
             self.hash_code = get_deep_hash(self.board_state)
+            self.captured_stones = args[4]
 
     def to_next(self, x, y, player_id, free_points):
         return GameTurn(self, x, y, player_id, free_points)

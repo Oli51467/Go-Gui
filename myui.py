@@ -1,16 +1,18 @@
+import numpy as np
 import serial
 import serial.tools.list_ports
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 import qtawesome
 from PyQt5.QtCore import QCoreApplication, QTimer
-from PyQt5.QtWidgets import QLabel, QLineEdit, QMessageBox, QComboBox, QListView, QHeaderView, QAbstractItemView, QTableWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QLabel, QLineEdit, QMessageBox, QComboBox, QListView, QHeaderView, QAbstractItemView, \
+    QTableWidget, QTableWidgetItem
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as fc
 
 import funcs
-from funcs import draw_stars, change_color
-from main import draw_grids
+from funcs import draw_stars, change_color, draw_grids
+from go.models import Board, WIDTH
 
 global USER_NAME
 INIT = False
@@ -20,6 +22,8 @@ code_map = []
 WINDOW_WIDTH, WINDOW_HEIGHT = 800, 500
 BUTTON_HEIGHT, BUTTON_WIDTH = 40, 150
 CENTER_HEIGHT, CENTER_WIDTH = 460, 460
+OP_BUTTON_HEIGHT, OP_BUTTON_WIDTH = 50, 180
+OP_ICON_HEIGHT, OP_ICON_WIDTH = 25, 25
 
 
 class MainUi(QtWidgets.QMainWindow):
@@ -95,17 +99,7 @@ class MainUi(QtWidgets.QMainWindow):
     def change_level(self, i):
         funcs.LEVEL = i
 
-    def on_game_click(self, Item=None):
-        # 如果单元格对象为空
-        if Item is None:
-            return
-        else:
-            funcs.ROW_CLICK = Item.row()  # 获取行数
-            print(code_map[Item.row()])
-            self.game_record_table_view.setVisible(False)
-
-    def init_ui(self):
-        self.timer = QTimer(self)
+    def draw_origin_play_board(self):
         self.fig = plt.Figure()  # 公共属性figure
         self.canvas = fc(self.fig)  # 新建画布，在画布上构建matplotlib图像
         self.fig.patch.set_facecolor((0.85, 0.64, 0.45))  # 背景颜色 可调
@@ -115,6 +109,7 @@ class MainUi(QtWidgets.QMainWindow):
         draw_stars(self.ax)
         self.canvas.draw()  # 这里调用才能在画布上显示
 
+    def draw_origin_review_board(self):
         self.fig_record = plt.Figure()
         self.canvas_record = fc(self.fig_record)
         self.fig_record.set_facecolor((0.85, 0.64, 0.45))
@@ -123,6 +118,123 @@ class MainUi(QtWidgets.QMainWindow):
         draw_grids(self.ax_record)
         draw_stars(self.ax_record)
         self.canvas_record.draw()
+
+    def draw_board(self, board_state):
+        self.clear_review_board()
+        for i in range(1, 20):
+            for j in range(1, 20):
+                if board_state[i][j] == 1:
+                    self.stones_plot_review[i, j] = funcs.draw_stone(i, j, "k", self.ax_record)
+                elif board_state[i][j] == 2:
+                    self.stones_plot_review[i, j] = funcs.draw_stone(i, j, "w", self.ax_record)
+        self.canvas_record.draw()
+
+    def clear_review_board(self):
+        for i in range(20):
+            for j in range(20):
+                if self.stones_plot_review[i, j] is not None:
+                    self.stones_plot_review[i, j].pop().remove()
+                    self.stones_plot_review[i, j] = None
+        self.canvas_record.draw()
+
+    def on_game_click(self, Item=None):
+        # 如果单元格对象为空
+        if Item is None:
+            return
+        else:
+            funcs.ROW_CLICK = Item.row()  # 获取行数
+            # print(code_map[Item.row()])
+            self.game_record_table_view.setVisible(False)
+            self.view_record_widget.setVisible(True)
+            self.cur_pointer, self.undo_pointer = 0, 0
+            self.game_item_row = Item.row()
+            self.board_review = Board(WIDTH, WIDTH, 0)
+
+    def back2select_game(self):
+        self.clear_review_board()
+        self.view_record_widget.setVisible(False)
+        self.select_record_widget.setVisible(True)
+        self.game_record_table_view.setVisible(True)
+
+    def press_proceed(self):
+        print("cur_pointer: %s, undo_pointer:%s" % (self.cur_pointer, self.undo_pointer))
+        if self.undo_pointer < self.cur_pointer:
+            self.redo()
+        else:
+            if self.cur_pointer >= len(code_map[self.game_item_row]):
+                return
+            self.proceed()
+
+    def proceed(self):
+        player = self.board_review.get_player()
+        self.board_review.play(code_map[self.game_item_row][self.cur_pointer][0],
+                               code_map[self.game_item_row][self.cur_pointer][1], player)
+        self.board_review.next_player()
+        index_x, index_y = code_map[self.game_item_row][self.cur_pointer][0], code_map[self.game_item_row][self.cur_pointer][1]
+        print(index_x, index_y)
+        self.stones_plot_review[index_x, index_y] = funcs.draw_stone(index_y - 1, 19 - index_x,
+                                                                     'k' if player.get_identifier() == 1 else 'w',
+                                                                     self.ax_record)
+        captured_stones = self.board_review.captured_stones
+        for stones in captured_stones:
+            self.stones_plot_review[stones.x, stones.y].pop().remove()  # remove the plot
+            self.stones_plot_review[stones.x, stones.y] = None
+        self.canvas_record.draw()
+        self.cur_pointer += 1
+        self.undo_pointer += 1
+
+    def press_undo(self):
+        print("cur_pointer: %s, undo_pointer:%s" % (self.cur_pointer, self.undo_pointer))
+        if self.cur_pointer <= 0 or self.undo_pointer <= 0:
+            return
+        self.undo()
+
+    def undo(self):
+        last_move = self.board_review.get_point(self.board_review.game_record.get_last_turn().x,
+                                                self.board_review.game_record.get_last_turn().y)
+        self.stones_plot_review[last_move.x, last_move.y].pop().remove()  # remove the plot
+        self.stones_plot_review[last_move.x, last_move.y] = None
+        captured_stones = self.board_review.game_record.get_last_turn().captured_stones
+        for stones in captured_stones:
+            self.stones_plot_review[stones.x, stones.y] = funcs.draw_stone(stones.y - 1, 19 - stones.x, "k" if self.board_review.get_player().get_identifier() == 1 else "w", self.ax_record)
+        self.board_review.undo()
+        self.canvas_record.draw()
+        self.undo_pointer -= 1
+
+    def redo(self):
+        self.board_review.redo()
+        captured_stones = self.board_review.game_record.get_last_turn().captured_stones
+        for stones in captured_stones:
+            self.stones_plot_review[stones.x, stones.y].pop().remove()  # remove the plot
+            self.stones_plot_review[stones.x, stones.y] = None
+        last_move = self.board_review.get_point(self.board_review.game_record.preceding.peek().x,
+                                                self.board_review.game_record.preceding.peek().y)
+        self.stones_plot_review[last_move.x, last_move.y] = funcs.draw_stone(last_move.y - 1, 19 - last_move.x,
+                                                                             'k' if self.board_review.get_player().get_identifier() == 2 else 'w',
+                                                                             self.ax_record)
+        self.undo_pointer += 1
+        self.canvas_record.draw()
+
+    def press_fast_proceed(self):
+        for i in range(7):
+            if self.undo_pointer < self.cur_pointer:
+                self.redo()
+            else:
+                if self.cur_pointer >= len(code_map[self.game_item_row]):
+                    return
+                self.proceed()
+
+    def press_fast_undo(self):
+        for i in range(7):
+            if self.cur_pointer <= 0:
+                return
+            self.undo()
+
+    def init_ui(self):
+        self.timer = QTimer(self)
+        self.stones_plot_review = np.full((20, 20), None)
+        self.draw_origin_play_board()
+        self.draw_origin_review_board()
 
         self.setFixedSize(WINDOW_WIDTH, WINDOW_HEIGHT)
 
@@ -281,6 +393,49 @@ class MainUi(QtWidgets.QMainWindow):
         self.game_record_table_view.setFixedWidth(180)
         self.select_record_layout.addWidget(self.game_record_table_view, 0, 1, 1, 1)
 
+        # 右边 查看棋谱 操作前进后退
+        self.view_record_widget = QtWidgets.QWidget()  # 创建右侧部件
+        self.view_record_widget.setObjectName('view_record_widget')
+        self.view_record_layout = QtWidgets.QGridLayout()
+        self.view_record_widget.setLayout(self.view_record_layout)  # 设置右侧部件布局为网格
+        self.view_record_widget.setVisible(False)
+
+        # 几个操作按钮 前进按钮
+        self.proceed_button = QtWidgets.QPushButton("前进")
+        self.proceed_button.setIcon(QtGui.QIcon('images/icon_proceed.png'))
+        self.proceed_button.setIconSize(QtCore.QSize(OP_ICON_HEIGHT, OP_BUTTON_WIDTH))
+        self.proceed_button.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
+        self.proceed_button.clicked.connect(self.press_proceed)
+        # 返回棋谱列表按钮
+        self.btn_return2record = QtWidgets.QPushButton(qtawesome.icon('mdi.language-go', color='#2c3a45'), "返回棋谱")
+        self.btn_return2record.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
+        self.btn_return2record.clicked.connect(self.back2select_game)
+        # 后退按钮
+        self.undo_button = QtWidgets.QPushButton("后退")
+        self.undo_button.setIcon(QtGui.QIcon('images/icon_undo.png'))
+        self.undo_button.setIconSize(QtCore.QSize(OP_ICON_HEIGHT, OP_ICON_WIDTH))
+        self.undo_button.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
+        self.undo_button.clicked.connect(self.press_undo)
+        # 快进按钮
+        self.fast_proceed_button = QtWidgets.QPushButton("快进")
+        self.fast_proceed_button.setIcon(QtGui.QIcon('images/icon_fast_proceed.png'))
+        self.fast_proceed_button.setIconSize(QtCore.QSize(OP_ICON_HEIGHT, OP_ICON_WIDTH))
+        self.fast_proceed_button.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
+        self.fast_proceed_button.clicked.connect(self.press_fast_proceed)
+        # 快退按钮
+        self.fast_undo_button = QtWidgets.QPushButton("快退")
+        self.fast_undo_button.setIcon(QtGui.QIcon('images/icon_fast_undo.png'))
+        self.fast_undo_button.setIconSize(QtCore.QSize(OP_ICON_HEIGHT, OP_ICON_WIDTH))
+        self.fast_undo_button.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
+        self.fast_undo_button.clicked.connect(self.press_fast_undo)
+        # 一键到底按钮
+
+        self.view_record_layout.addWidget(self.proceed_button, 2, 1, 1, 2)
+        self.view_record_layout.addWidget(self.fast_proceed_button, 3, 1, 1, 2)
+        self.view_record_layout.addWidget(self.undo_button, 4, 1, 1, 2)
+        self.view_record_layout.addWidget(self.fast_undo_button, 5, 1, 1, 2)
+        self.view_record_layout.addWidget(self.btn_return2record, 6, 1, 1, 2)
+
         self.btn_choose_black = QtWidgets.QPushButton("执黑")
         self.btn_choose_black.setDown(True)
         self.btn_choose_black.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
@@ -323,6 +478,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.main_layout.addWidget(self.play_func_widget, 1, 9, 12, 3)
         self.main_layout.addWidget(self.play_setting_widget, 1, 9, 12, 3)
         self.main_layout.addWidget(self.select_record_widget, 1, 9, 12, 3)
+        self.main_layout.addWidget(self.view_record_widget, 1, 9, 12, 3)
         self.main_layout.addWidget(self.top_widget, 0, 0, 1, 12)  # 头部侧部件在第0行第0列，占1行11列
         self.setCentralWidget(self.main_widget)  # 设置窗口主部件
 
@@ -332,6 +488,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.left_layout.setSpacing(0)
         self.left_layout2.setSpacing(0)
         self.left_layout3.setSpacing(0)
+        self.view_record_layout.setSpacing(0)
 
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.left_layout.setContentsMargins(0, 0, 0, 0)
@@ -339,7 +496,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.left_layout2.setContentsMargins(0, 0, 0, 0)
         self.left_layout3.setContentsMargins(0, 0, 0, 0)
         self.game_record_table_view.setContentsMargins(0, 0, 0, 0)
-        #self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 隐藏边框
+        self.view_record_layout.setContentsMargins(0, 0, 0, 0)
+        # self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 隐藏边框
 
         self.left_button_1.clicked.connect(
             lambda: change_color(self.left_button_1, self.left_button_2))
@@ -359,6 +517,11 @@ class MainUi(QtWidgets.QMainWindow):
             '''
         )
         self.btn_play.setStyleSheet(
+            '''
+            background-color:#31a420;
+            '''
+        )
+        self.btn_return2record.setStyleSheet(
             '''
             background-color:#31a420;
             '''

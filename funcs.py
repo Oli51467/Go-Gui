@@ -24,22 +24,25 @@ def change_color(*args):
 def switch2play(window):
     window.game_record_widget.setVisible(False)
     window.select_record_widget.setVisible(False)
-    window.play_widget.setVisible(True)
     window.play_func_widget.setVisible(False)
+    window.view_record_widget.setVisible(False)
     window.play_setting_widget.setVisible(True)
+    window.play_widget.setVisible(True)
 
 
 def switch2review(window):
     window.game_record_widget.setVisible(True)
+    window.game_record_table_view.setVisible(True)
     window.select_record_widget.setVisible(True)
     window.play_widget.setVisible(False)
     window.play_func_widget.setVisible(False)
     window.play_setting_widget.setVisible(False)
+    window.view_record_widget.setVisible(False)
 
 
 # 画棋子
 def draw_stone(x, y, color, ax):
-    stone = ax.plot(x, y, 'o', markersize=20, markeredgecolor=(0, 0, 0), markerfacecolor=color, markeredgewidth=1)
+    stone = ax.plot(x, y, 'o', markersize=12, markeredgecolor=(0, 0, 0), markerfacecolor=color, markeredgewidth=1)
     return stone
 
 
@@ -53,6 +56,17 @@ def draw_stars(ax):
 # 画星位
 def draw_star_points(ax, x, y):
     ax.plot(x, y, 'o', markersize=5, markeredgecolor=(0, 0, 0), markerfacecolor='k', markeredgewidth=1)
+
+
+# 画格
+def draw_grids(ax):
+    # 竖线
+    for x in range(19):
+        ax.plot([x, x], [0, 18], 'k')
+    # 横线
+    for y in range(19):
+        ax.plot([0, 18], [y, y], 'k')
+    ax.set_position([0, 0, 1, 1])
 
 
 def check_email_format(email):
