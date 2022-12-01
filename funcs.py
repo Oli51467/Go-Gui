@@ -58,6 +58,12 @@ def draw_star_points(ax, x, y):
     ax.plot(x, y, 'o', markersize=5, markeredgecolor=(0, 0, 0), markerfacecolor='k', markeredgewidth=1)
 
 
+# 画红点
+def draw_red_point(ax, x, y):
+    red = ax.plot(x, y, 'o', markersize=4, markeredgecolor=(0, 0, 0), markerfacecolor='r', markeredgewidth=1)
+    return red
+
+
 # 画格
 def draw_grids(ax):
     # 竖线

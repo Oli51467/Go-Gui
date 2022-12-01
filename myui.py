@@ -4,9 +4,9 @@ import serial.tools.list_ports
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 import qtawesome
-from PyQt5.QtCore import QCoreApplication, QTimer
+from PyQt5.QtCore import QCoreApplication, QTimer, Qt
 from PyQt5.QtWidgets import QLabel, QLineEdit, QMessageBox, QComboBox, QListView, QHeaderView, QAbstractItemView, \
-    QTableWidget, QTableWidgetItem
+    QTableWidget, QTableWidgetItem, QTextEdit
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as fc
 
@@ -19,6 +19,7 @@ INIT = False
 levels = ["1段", "2段", "3段", "4段", "5段"]
 games = []
 code_map = []
+info_map = []
 WINDOW_WIDTH, WINDOW_HEIGHT = 800, 500
 BUTTON_HEIGHT, BUTTON_WIDTH = 40, 150
 CENTER_HEIGHT, CENTER_WIDTH = 460, 460
@@ -99,6 +100,7 @@ class MainUi(QtWidgets.QMainWindow):
     def change_level(self, i):
         funcs.LEVEL = i
 
+    # 画下棋的棋盘
     def draw_origin_play_board(self):
         self.fig = plt.Figure()  # 公共属性figure
         self.canvas = fc(self.fig)  # 新建画布，在画布上构建matplotlib图像
@@ -109,6 +111,7 @@ class MainUi(QtWidgets.QMainWindow):
         draw_stars(self.ax)
         self.canvas.draw()  # 这里调用才能在画布上显示
 
+    # 画棋谱的棋盘
     def draw_origin_review_board(self):
         self.fig_record = plt.Figure()
         self.canvas_record = fc(self.fig_record)
@@ -119,16 +122,7 @@ class MainUi(QtWidgets.QMainWindow):
         draw_stars(self.ax_record)
         self.canvas_record.draw()
 
-    def draw_board(self, board_state):
-        self.clear_review_board()
-        for i in range(1, 20):
-            for j in range(1, 20):
-                if board_state[i][j] == 1:
-                    self.stones_plot_review[i, j] = funcs.draw_stone(i, j, "k", self.ax_record)
-                elif board_state[i][j] == 2:
-                    self.stones_plot_review[i, j] = funcs.draw_stone(i, j, "w", self.ax_record)
-        self.canvas_record.draw()
-
+    # 清空棋盘
     def clear_review_board(self):
         for i in range(20):
             for j in range(20):
@@ -137,25 +131,29 @@ class MainUi(QtWidgets.QMainWindow):
                     self.stones_plot_review[i, j] = None
         self.canvas_record.draw()
 
+    # 选择一个棋谱的点击事件
     def on_game_click(self, Item=None):
         # 如果单元格对象为空
         if Item is None:
             return
         else:
             funcs.ROW_CLICK = Item.row()  # 获取行数
-            # print(code_map[Item.row()])
             self.game_record_table_view.setVisible(False)
             self.view_record_widget.setVisible(True)
             self.cur_pointer, self.undo_pointer = 0, 0
             self.game_item_row = Item.row()
             self.board_review = Board(WIDTH, WIDTH, 0)
+            self.test.setPlainText(info_map[self.game_item_row])
+            self.test.setAlignment(Qt.AlignLeft)
 
+    # 查看棋谱详细信息返回到选择棋谱界面
     def back2select_game(self):
         self.clear_review_board()
         self.view_record_widget.setVisible(False)
         self.select_record_widget.setVisible(True)
         self.game_record_table_view.setVisible(True)
 
+    # 点击前进的触发事件
     def press_proceed(self):
         print("cur_pointer: %s, undo_pointer:%s" % (self.cur_pointer, self.undo_pointer))
         if self.undo_pointer < self.cur_pointer:
@@ -165,56 +163,80 @@ class MainUi(QtWidgets.QMainWindow):
                 return
             self.proceed()
 
+    # 前进一步
     def proceed(self):
-        player = self.board_review.get_player()
+        last_x, last_y = self.board_review.game_record.get_last_turn().x, self.board_review.game_record.get_last_turn().y   # 上一步
+        player = self.board_review.get_player()  # 当前玩家
         self.board_review.play(code_map[self.game_item_row][self.cur_pointer][0],
-                               code_map[self.game_item_row][self.cur_pointer][1], player)
+                               code_map[self.game_item_row][self.cur_pointer][1], player)   # 在棋盘上走棋
         self.board_review.next_player()
         index_x, index_y = code_map[self.game_item_row][self.cur_pointer][0], code_map[self.game_item_row][self.cur_pointer][1]
         print(index_x, index_y)
         self.stones_plot_review[index_x, index_y] = funcs.draw_stone(index_y - 1, 19 - index_x,
                                                                      'k' if player.get_identifier() == 1 else 'w',
-                                                                     self.ax_record)
-        captured_stones = self.board_review.captured_stones
-        for stones in captured_stones:
-            self.stones_plot_review[stones.x, stones.y].pop().remove()  # remove the plot
+                                                                     self.ax_record)    # 将落子位置关联嵌入
+        if self.cur_pointer != 0:   # 画红点标记 先移除上一步的红点标记
+            self.red_point_plot[last_x, last_y].pop().remove()
+            self.red_point_plot[last_x, last_y] = None
+        self.red_point_plot[index_x, index_y] = funcs.draw_red_point(self.ax_record, index_y - 1, 19 - index_x)  # 当前位置标记嵌入
+        captured_stones = self.board_review.captured_stones     # 走棋后被吃的棋子
+        for stones in captured_stones:  # remove the plot
+            self.stones_plot_review[stones.x, stones.y].pop().remove()
             self.stones_plot_review[stones.x, stones.y] = None
         self.canvas_record.draw()
         self.cur_pointer += 1
         self.undo_pointer += 1
 
+    # 点击回退的触发事件
     def press_undo(self):
         print("cur_pointer: %s, undo_pointer:%s" % (self.cur_pointer, self.undo_pointer))
         if self.cur_pointer <= 0 or self.undo_pointer <= 0:
             return
         self.undo()
 
+    # 回退一步
     def undo(self):
         last_move = self.board_review.get_point(self.board_review.game_record.get_last_turn().x,
-                                                self.board_review.game_record.get_last_turn().y)
-        self.stones_plot_review[last_move.x, last_move.y].pop().remove()  # remove the plot
+                                                self.board_review.game_record.get_last_turn().y)    # 获取上一步
+        # 移除棋子plot
+        self.stones_plot_review[last_move.x, last_move.y].pop().remove()
         self.stones_plot_review[last_move.x, last_move.y] = None
-        captured_stones = self.board_review.game_record.get_last_turn().captured_stones
-        for stones in captured_stones:
+        # 移除标记plot
+        self.red_point_plot[last_move.x, last_move.y].pop().remove()
+        self.red_point_plot[last_move.x, last_move.y] = None
+        captured_stones = self.board_review.game_record.get_last_turn().captured_stones  # 被吃的棋子
+        for stones in captured_stones:  # 恢复被吃的棋子 重新plot进去
             self.stones_plot_review[stones.x, stones.y] = funcs.draw_stone(stones.y - 1, 19 - stones.x, "k" if self.board_review.get_player().get_identifier() == 1 else "w", self.ax_record)
         self.board_review.undo()
+        # 重新标记上一步
+        cur_x, cur_y = self.board_review.game_record.get_last_turn().x, self.board_review.game_record.get_last_turn().y
+        self.red_point_plot[cur_x, cur_y] = funcs.draw_red_point(self.ax_record, cur_y - 1, 19 - cur_x)
         self.canvas_record.draw()
         self.undo_pointer -= 1
 
     def redo(self):
+        last_x, last_y = self.board_review.game_record.get_last_turn().x, self.board_review.game_record.get_last_turn().y   # 获取上一步
+        # 移除上一步的标记
+        self.red_point_plot[last_x, last_y].pop().remove()
+        self.red_point_plot[last_x, last_y] = None
         self.board_review.redo()
-        captured_stones = self.board_review.game_record.get_last_turn().captured_stones
-        for stones in captured_stones:
-            self.stones_plot_review[stones.x, stones.y].pop().remove()  # remove the plot
+        captured_stones = self.board_review.game_record.get_last_turn().captured_stones  # 被吃的棋子
+        for stones in captured_stones:  # 移除被吃的棋子 remove the plot
+            self.stones_plot_review[stones.x, stones.y].pop().remove()
             self.stones_plot_review[stones.x, stones.y] = None
+        # redo后的上一步，此时last_x, last_y是上上步
         last_move = self.board_review.get_point(self.board_review.game_record.preceding.peek().x,
                                                 self.board_review.game_record.preceding.peek().y)
+        # 将新的一步plot进去
         self.stones_plot_review[last_move.x, last_move.y] = funcs.draw_stone(last_move.y - 1, 19 - last_move.x,
                                                                              'k' if self.board_review.get_player().get_identifier() == 2 else 'w',
                                                                              self.ax_record)
+        # 标记新的一步
+        self.red_point_plot[last_move.x, last_move.y] = funcs.draw_red_point(self.ax_record, last_move.y - 1, 19 - last_move.x)
         self.undo_pointer += 1
         self.canvas_record.draw()
 
+    # 点击快进的触发事件
     def press_fast_proceed(self):
         for i in range(7):
             if self.undo_pointer < self.cur_pointer:
@@ -224,6 +246,7 @@ class MainUi(QtWidgets.QMainWindow):
                     return
                 self.proceed()
 
+    # 快进 step=7
     def press_fast_undo(self):
         for i in range(7):
             if self.cur_pointer <= 0:
@@ -233,6 +256,7 @@ class MainUi(QtWidgets.QMainWindow):
     def init_ui(self):
         self.timer = QTimer(self)
         self.stones_plot_review = np.full((20, 20), None)
+        self.red_point_plot = np.full((20, 20), None)
         self.draw_origin_play_board()
         self.draw_origin_review_board()
 
@@ -381,6 +405,7 @@ class MainUi(QtWidgets.QMainWindow):
             item = QTableWidgetItem(games[index]['play_info'] + "\n" + games[index]['result'])
             # 设置每个位置的文本值
             code_map.append(funcs.get_all_moves_and_merge(games[index]['code']))
+            info_map.append(games[index]['play_info'] + "\n" + games[index]['result'])
             self.game_record_table_view.setItem(index, 0, item)
         # 水平方向标签拓展剩下的窗口部分，填满表格
         self.game_record_table_view.horizontalHeader().setStretchLastSection(True)
@@ -396,11 +421,11 @@ class MainUi(QtWidgets.QMainWindow):
         # 右边 查看棋谱 操作前进后退
         self.view_record_widget = QtWidgets.QWidget()  # 创建右侧部件
         self.view_record_widget.setObjectName('view_record_widget')
-        self.view_record_layout = QtWidgets.QGridLayout()
+        self.view_record_layout = QtWidgets.QVBoxLayout()
         self.view_record_widget.setLayout(self.view_record_layout)  # 设置右侧部件布局为网格
         self.view_record_widget.setVisible(False)
 
-        # 几个操作按钮 前进按钮
+        # 前进按钮
         self.proceed_button = QtWidgets.QPushButton("前进")
         self.proceed_button.setIcon(QtGui.QIcon('images/icon_proceed.png'))
         self.proceed_button.setIconSize(QtCore.QSize(OP_ICON_HEIGHT, OP_BUTTON_WIDTH))
@@ -429,12 +454,16 @@ class MainUi(QtWidgets.QMainWindow):
         self.fast_undo_button.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
         self.fast_undo_button.clicked.connect(self.press_fast_undo)
         # 一键到底按钮
-
-        self.view_record_layout.addWidget(self.proceed_button, 2, 1, 1, 2)
-        self.view_record_layout.addWidget(self.fast_proceed_button, 3, 1, 1, 2)
-        self.view_record_layout.addWidget(self.undo_button, 4, 1, 1, 2)
-        self.view_record_layout.addWidget(self.fast_undo_button, 5, 1, 1, 2)
-        self.view_record_layout.addWidget(self.btn_return2record, 6, 1, 1, 2)
+        self.test = QTextEdit("info")
+        self.test.setFixedSize(160, 70)
+        self.test.setReadOnly(True)
+        self.view_record_layout.addWidget(self.test)
+        self.view_record_layout.addWidget(self.proceed_button)
+        self.view_record_layout.addWidget(self.fast_proceed_button)
+        self.view_record_layout.addWidget(self.undo_button)
+        self.view_record_layout.addWidget(self.fast_undo_button)
+        self.view_record_layout.addWidget(self.btn_return2record)
+        self.view_record_layout.setContentsMargins(0, 0, 0, 0)
 
         self.btn_choose_black = QtWidgets.QPushButton("执黑")
         self.btn_choose_black.setDown(True)
@@ -560,7 +589,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.left_widget2.setStyleSheet(
             '''
             QPushButton {
-                font-size: 24px;
+                font-size: 18px;
             }
             QPushButton:hover{
                 background:#e6e6e6;
@@ -591,7 +620,7 @@ class MainUi(QtWidgets.QMainWindow):
             *{background-color:#fafafa;}
             QPushButton{
                 border:none;
-                font-size:15px;
+                font-size:10px;
                 text-align:left;
                 padding-left:30px;
                 height:70px;
