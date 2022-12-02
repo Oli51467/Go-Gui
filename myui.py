@@ -11,14 +11,17 @@ from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as fc
 
 import funcs
-from funcs import draw_stars, change_color, draw_grids
+from apis import init_set, tip
+from funcs import draw_stars, change_color, draw_grids, moves_map, indexes_map
 from go.models import Board, WIDTH
+from go.utils import transform_indexes
 
 global USER_NAME
 INIT = False
 levels = ["1段", "2段", "3段", "4段", "5段"]
 games = []
-code_map = []
+# indexes_map = []  # 位置 eg: [(4, 4), (4, 16), (5, 5)]
+# moves_map = []  # 坐标 eg:  [D4, H5, T6]
 info_map = []
 WINDOW_WIDTH, WINDOW_HEIGHT = 800, 500
 BUTTON_HEIGHT, BUTTON_WIDTH = 40, 150
@@ -148,6 +151,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.board_review = Board(WIDTH, WIDTH, 0)
             self.test.setPlainText(info_map[self.game_item_row])
             self.test.setAlignment(Qt.AlignLeft)
+            self.last_tip_x, self.last_tip_y = 0, 0
 
     # 查看棋谱详细信息返回到选择棋谱界面
     def back2select_game(self):
@@ -155,14 +159,17 @@ class MainUi(QtWidgets.QMainWindow):
         self.view_record_widget.setVisible(False)
         self.select_record_widget.setVisible(True)
         self.game_record_table_view.setVisible(True)
+        self.btn_tip.setEnabled(True)
 
     # 点击前进的触发事件
     def press_proceed(self):
+        self.remove_tip()
+        self.btn_tip.setEnabled(True)
         print("cur_pointer: %s, undo_pointer:%s" % (self.cur_pointer, self.undo_pointer))
         if self.undo_pointer < self.cur_pointer:
             self.redo()
         else:
-            if self.cur_pointer >= len(code_map[self.game_item_row]):
+            if self.cur_pointer >= len(indexes_map[self.game_item_row]):
                 return
             self.proceed()
 
@@ -170,10 +177,10 @@ class MainUi(QtWidgets.QMainWindow):
     def proceed(self):
         last_x, last_y = self.board_review.game_record.get_last_turn().x, self.board_review.game_record.get_last_turn().y   # 上一步
         player = self.board_review.get_player()  # 当前玩家
-        self.board_review.play(code_map[self.game_item_row][self.cur_pointer][0],
-                               code_map[self.game_item_row][self.cur_pointer][1], player)   # 在棋盘上走棋
+        self.board_review.play(indexes_map[self.game_item_row][self.cur_pointer][0],
+                               indexes_map[self.game_item_row][self.cur_pointer][1], player)   # 在棋盘上走棋
         self.board_review.next_player()
-        index_x, index_y = code_map[self.game_item_row][self.cur_pointer][0], code_map[self.game_item_row][self.cur_pointer][1]
+        index_x, index_y = indexes_map[self.game_item_row][self.cur_pointer][0], indexes_map[self.game_item_row][self.cur_pointer][1]
         # print(index_x, index_y)
         self.stones_plot_review[index_x, index_y] = funcs.draw_stone(index_y - 1, 19 - index_x,
                                                                      'k' if player.get_identifier() == 1 else 'w',
@@ -192,6 +199,8 @@ class MainUi(QtWidgets.QMainWindow):
 
     # 点击回退的触发事件
     def press_undo(self):
+        self.remove_tip()
+        self.btn_tip.setEnabled(True)
         print("cur_pointer: %s, undo_pointer:%s" % (self.cur_pointer, self.undo_pointer))
         if self.cur_pointer <= 0 or self.undo_pointer <= 0:
             return
@@ -241,20 +250,44 @@ class MainUi(QtWidgets.QMainWindow):
 
     # 点击快进的触发事件
     def press_fast_proceed(self):
+        self.remove_tip()
+        self.btn_tip.setEnabled(True)
         for i in range(7):
             if self.undo_pointer < self.cur_pointer:
                 self.redo()
             else:
-                if self.cur_pointer >= len(code_map[self.game_item_row]):
+                if self.cur_pointer >= len(indexes_map[self.game_item_row]):
                     return
                 self.proceed()
 
     # 快进 step=7
     def press_fast_undo(self):
+        self.remove_tip()
+        self.btn_tip.setEnabled(True)
         for i in range(7):
             if self.cur_pointer <= 0:
                 return
             self.undo()
+
+    def tip(self):
+        self.btn_tip.setEnabled(False)
+        print(self.cur_pointer, self.undo_pointer)
+        # 此时局面的索引是undo_pointer指示的
+        if self.undo_pointer < self.cur_pointer:
+            tip_data = {"user_id": "djn", "initialStones": [], "moves": moves_map[self.game_item_row][:self.undo_pointer]}
+        else:
+            tip_data = {"user_id": "djn", "initialStones": [], "moves": moves_map[self.game_item_row][:self.undo_pointer]}
+        go_resp = tip(tip_data)
+        engine_x, engine_y = transform_indexes(go_resp)
+        self.red_point_plot[engine_x, engine_y] = funcs.draw_tip_point(self.ax_record, engine_y - 1, 19 - engine_x)
+        self.last_tip_x, self.last_tip_y = engine_x, engine_y
+        self.canvas_record.draw()
+
+    def remove_tip(self):
+        if self.red_point_plot[self.last_tip_x, self.last_tip_y] is not None:
+            self.red_point_plot[self.last_tip_x, self.last_tip_y].pop().remove()
+            self.red_point_plot[self.last_tip_x, self.last_tip_y] = None
+            self.last_tip_x, self.last_tip_y = 0, 0
 
     def init_ui(self):
         self.timer = QTimer(self)
@@ -407,7 +440,8 @@ class MainUi(QtWidgets.QMainWindow):
         for index in range(len(games)):
             item = QTableWidgetItem(games[index]['play_info'] + "\n" + games[index]['result'])
             # 设置每个位置的文本值
-            code_map.append(funcs.get_all_moves_and_merge(games[index]['code']))
+            funcs.get_all_moves_and_merge(games[index]['code'])
+            # indexes_map.append(funcs.get_all_moves_and_merge(games[index]['code'])[0])
             info_map.append(games[index]['play_info'] + "\n" + games[index]['result'])
             self.game_record_table_view.setItem(index, 0, item)
         # 水平方向标签拓展剩下的窗口部分，填满表格
@@ -456,15 +490,21 @@ class MainUi(QtWidgets.QMainWindow):
         self.fast_undo_button.setIconSize(QtCore.QSize(OP_ICON_HEIGHT, OP_ICON_WIDTH))
         self.fast_undo_button.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
         self.fast_undo_button.clicked.connect(self.press_fast_undo)
-        # 一键到底按钮
+        # 对局信息展示
         self.test = QTextEdit("info")
         self.test.setFixedSize(160, 70)
         self.test.setReadOnly(True)
+        # 提示一手按钮
+        self.btn_tip = QtWidgets.QPushButton(qtawesome.icon('mdi.language-go', color='#2c3a45'), "AI选点")
+        self.btn_tip.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
+        self.btn_tip.clicked.connect(self.tip)
+
         self.view_record_layout.addWidget(self.test)
         self.view_record_layout.addWidget(self.proceed_button)
         self.view_record_layout.addWidget(self.fast_proceed_button)
         self.view_record_layout.addWidget(self.undo_button)
         self.view_record_layout.addWidget(self.fast_undo_button)
+        self.view_record_layout.addWidget(self.btn_tip)
         self.view_record_layout.addWidget(self.btn_return2record)
         self.view_record_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -669,5 +709,12 @@ if __name__ == '__main__':
     QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QtWidgets.QApplication(sys.argv)
     gui = MainUi()
+    data = {"user_id": "djn", "rules": "", "komi": "", "play": "1", "level": "p", "boardsize": "19"}
+    resp = init_set(data)
+    if not resp:
+        print('连接服务器失败')
+    # 初始化成功 则开始
+    if resp == 1000:
+        print('连接引擎成功')
     gui.show()
     sys.exit(app.exec_())

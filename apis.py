@@ -17,3 +17,10 @@ def go(data):
     resp_data = json.loads(resp.text)['data']
     print(resp_data)
     return resp_data['pv'][0]
+
+
+def tip(data):
+    resp = requests.post(url=config.configs['production'].REQUEST_IP + "WholeGameTip", json=data)
+    resp_data = json.loads(resp.text)['data']
+    print("resp data:", resp_data)
+    return resp_data['move']

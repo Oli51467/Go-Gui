@@ -7,6 +7,8 @@ import go.utils
 LEVEL = 0
 PLAYER = 1
 ROW_CLICK = 0
+indexes_map = []
+moves_map = []
 
 
 def change_color(*args):
@@ -62,6 +64,11 @@ def draw_star_points(ax, x, y):
 def draw_red_point(ax, x, y):
     red = ax.plot(x, y, 'o', markersize=4, markeredgecolor=(0, 0, 0), markerfacecolor='r', markeredgewidth=1)
     return red
+
+
+def draw_tip_point(ax, x, y):
+    point = ax.plot(x, y, 'o', markersize=7, markeredgecolor=(0, 0, 0), markerfacecolor='g', markeredgewidth=1)
+    return point
 
 
 # 画格
@@ -158,8 +165,8 @@ def get_white_moves_from_code(sgf):
 def get_all_moves_and_merge(sgf):
     black_moves = get_black_moves_from_code(sgf)
     white_moves = get_white_moves_from_code(sgf)
-    i, j = 0, 0
-    result = []
+    i, j, cnt = 0, 0, 1
+    result, moves41game = [], []
     while i < len(black_moves) and j < len(white_moves):
         if i <= j:
             result.append(black_moves[i])
@@ -167,4 +174,16 @@ def get_all_moves_and_merge(sgf):
         else:
             result.append(white_moves[j])
             j += 1
-    return result
+    for index in result:
+        temp = []
+        if cnt % 2 == 0:
+            temp.append("W")
+            temp.append(go.utils.get_position2index(index[0], index[1]))
+        else:
+            temp.append("B")
+            temp.append(go.utils.get_position2index(index[0], index[1]))
+        moves41game.append(temp)
+        cnt += 1
+    indexes_map.append(result)
+    moves_map.append(moves41game)
+    # return indexes_map, moves_map
