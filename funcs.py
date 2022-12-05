@@ -166,6 +166,18 @@ def get_white_moves_from_code(sgf):
     return result
 
 
+# 将行列坐标转化为棋盘坐标
+def get_index(x, y):
+    cnt_, position_ = 1, ""
+    for c_ in range(ord('A'), ord('Z')):
+        if cnt_ == y:
+            position_ += chr(c_)
+            break
+        cnt_ += 1
+    position_ += str(20 - x)
+    return position_
+
+
 def get_all_moves_and_merge(sgf):
     black_moves = get_black_moves_from_code(sgf)
     white_moves = get_white_moves_from_code(sgf)
@@ -191,3 +203,25 @@ def get_all_moves_and_merge(sgf):
     indexes_map.append(result)
     moves_map.append(moves41game)
     # return indexes_map, moves_map
+
+
+def get_info():
+    info = ""
+    if PLAYER == 1:
+        info = "黑方: " + "djn" + "  " + "白方: " + "KataGo"
+    else:
+        info = "黑方: " + "KataGo" + "  " + "白方: " + "djn"
+    return info
+
+
+def get_result():
+    return "白中盘胜" if PLAYER == 1 else "黑中盘胜"
+
+
+def save_game_as_sgf(board):
+    which = 'B'
+    game_sgf = ''
+    for game_turn in board.game_record.preceding:
+        game_sgf += ';' + which + get_index(game_turn.x, game_turn.y)
+        which = "W" if which == "B" else "W"
+    return game_sgf

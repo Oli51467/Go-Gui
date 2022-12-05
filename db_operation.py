@@ -102,7 +102,7 @@ def get_game_by_id(_id):
 
 
 # DAO层 保存棋谱
-def v2_save_game(user_name, play_info, result, code, level, source):
+def v2_save_game(user_name, play_info, result, code, level, source=0):
     session = Session()
     info = Game(user_name=str(user_name), play_info=str(play_info), result=str(result),
                 code=str(code), level=level, source=source)

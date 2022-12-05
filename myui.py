@@ -10,9 +10,10 @@ from PyQt5.QtWidgets import QLabel, QLineEdit, QMessageBox, QComboBox, QListView
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as fc
 
+import db_operation
 import funcs
 from apis import init_set, tip
-from funcs import draw_stars, change_color, draw_grids, moves_map, indexes_map
+from funcs import draw_stars, change_color, draw_grids, moves_map, indexes_map, get_result, get_info, save_game_as_sgf, LEVEL
 from go.models import Board, WIDTH
 from go.utils import transform_indexes
 
@@ -40,6 +41,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.play_func_widget.setVisible(True)
         self.left_button_2.setEnabled(False)
         self.left_button_1.setEnabled(False)
+        self.play_board = Board(WIDTH, WIDTH, 0)
         # TODO：串口检测 打开串口
         self.port_check()
         print("用户所选等级为:", funcs.LEVEL)
@@ -74,15 +76,16 @@ class MainUi(QtWidgets.QMainWindow):
             print("串口状态（已开启）")
 
     def end_play(self):
-        message = QMessageBox.question(self, '退出', '你确定要认输吗?', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        message = QMessageBox.question(self, '', '你确定要认输吗?', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
         if message == QMessageBox.Yes:
             self.save_game_query()
 
     def save_game_query(self):
-        message = QMessageBox.question(self, '退出', '是否存储棋谱？', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        message = QMessageBox.question(self, '', '是否存储棋谱？', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if message == QMessageBox.Yes:
             # TODO：棋谱存储
-            print('')
+            db_operation.v2_save_game("djn", get_info(), get_result(), save_game_as_sgf(self.play_board), LEVEL)
+            print('保存成功')
         self.play_func_widget.setVisible(False)
         self.play_setting_widget.setVisible(True)
         self.left_button_1.setEnabled(True)
@@ -171,7 +174,7 @@ class MainUi(QtWidgets.QMainWindow):
     def press_proceed(self):
         self.remove_tip()
         self.btn_tip.setEnabled(True)
-        print("cur_pointer: %s, undo_pointer:%s" % (self.cur_pointer, self.undo_pointer))
+        # print("cur_pointer: %s, undo_pointer:%s" % (self.cur_pointer, self.undo_pointer))
         if self.undo_pointer < self.cur_pointer:
             self.redo()
         else:
