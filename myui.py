@@ -42,8 +42,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.left_button_1.setEnabled(False)
         # TODO：串口检测 打开串口
         self.port_check()
-        print(funcs.LEVEL)
-        print(funcs.PLAYER)
+        print("用户所选等级为:", funcs.LEVEL)
+        print("用户执:", "黑" if funcs.PLAYER == 1 else "白")
 
     # 串口检测
     def port_check(self):
@@ -74,13 +74,19 @@ class MainUi(QtWidgets.QMainWindow):
             print("串口状态（已开启）")
 
     def end_play(self):
-        message = QMessageBox.question(self, '退出', '你确定要认输吗?', QMessageBox.Yes | QMessageBox.No,
-                                       QMessageBox.No)  # "退出"代表的是弹出框的标题,"你确认退出.."表示弹出框的内容
+        message = QMessageBox.question(self, '退出', '你确定要认输吗?', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
         if message == QMessageBox.Yes:
-            self.play_func_widget.setVisible(False)
-            self.play_setting_widget.setVisible(True)
-            self.left_button_1.setEnabled(True)
-            self.left_button_2.setEnabled(True)
+            self.save_game_query()
+
+    def save_game_query(self):
+        message = QMessageBox.question(self, '退出', '是否存储棋谱？', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        if message == QMessageBox.Yes:
+            # TODO：棋谱存储
+            print('')
+        self.play_func_widget.setVisible(False)
+        self.play_setting_widget.setVisible(True)
+        self.left_button_1.setEnabled(True)
+        self.left_button_2.setEnabled(True)
 
     def change_side(self, down, up):
         if down == self.btn_choose_black:
@@ -208,6 +214,8 @@ class MainUi(QtWidgets.QMainWindow):
 
     # 回退一步
     def undo(self):
+        if self.undo_pointer <= 0:
+            return
         last_move = self.board_review.get_point(self.board_review.game_record.get_last_turn().x,
                                                 self.board_review.game_record.get_last_turn().y)    # 获取上一步
         # 移除棋子plot
@@ -220,17 +228,20 @@ class MainUi(QtWidgets.QMainWindow):
         for stones in captured_stones:  # 恢复被吃的棋子 重新plot进去
             self.stones_plot_review[stones.x, stones.y] = funcs.draw_stone(stones.y - 1, 19 - stones.x, "k" if self.board_review.get_player().get_identifier() == 1 else "w", self.ax_record)
         self.board_review.undo()
-        # 重新标记上一步
-        cur_x, cur_y = self.board_review.game_record.get_last_turn().x, self.board_review.game_record.get_last_turn().y
-        self.red_point_plot[cur_x, cur_y] = funcs.draw_red_point(self.ax_record, cur_y - 1, 19 - cur_x)
-        self.canvas_record.draw()
         self.undo_pointer -= 1
+        # # 重新标记上一步
+        if self.undo_pointer != 0 and self.cur_pointer != 0:
+            cur_x, cur_y = self.board_review.game_record.get_last_turn().x, self.board_review.game_record.get_last_turn().y
+            self.red_point_plot[cur_x, cur_y] = funcs.draw_red_point(self.ax_record, cur_y - 1, 19 - cur_x)
+
+        self.canvas_record.draw()
 
     def redo(self):
         last_x, last_y = self.board_review.game_record.get_last_turn().x, self.board_review.game_record.get_last_turn().y   # 获取上一步
         # 移除上一步的标记
-        self.red_point_plot[last_x, last_y].pop().remove()
-        self.red_point_plot[last_x, last_y] = None
+        if self.undo_pointer != 0 and self.cur_pointer != 0:
+            self.red_point_plot[last_x, last_y].pop().remove()
+            self.red_point_plot[last_x, last_y] = None
         self.board_review.redo()
         captured_stones = self.board_review.game_record.get_last_turn().captured_stones  # 被吃的棋子
         for stones in captured_stones:  # 移除被吃的棋子 remove the plot
@@ -262,10 +273,12 @@ class MainUi(QtWidgets.QMainWindow):
 
     # 快进 step=7
     def press_fast_undo(self):
+        if self.cur_pointer <= 0 or self.undo_pointer <= 0:
+            return
         self.remove_tip()
         self.btn_tip.setEnabled(True)
         for i in range(7):
-            if self.cur_pointer <= 0:
+            if self.cur_pointer <= 0 or self.undo_pointer <= 0:
                 return
             self.undo()
 
@@ -383,7 +396,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.game_record_widget.setVisible(False)  # 默认不显示
 
         # 右边栏 下棋时的按钮
-        self.btn_count = QtWidgets.QPushButton(qtawesome.icon('msc.git-pull-request', color='#2c3a45'), "申请数子")
+        self.btn_count = QtWidgets.QPushButton(qtawesome.icon('msc.git-pull-request', color='#2c3a45'), "AI判断胜负")
         self.btn_resign = QtWidgets.QPushButton(qtawesome.icon('mdi6.close-box', color='#2c3a45'), "认输")
         self.btn_resign.clicked.connect(lambda: self.end_play())
         self.btn_peace = QtWidgets.QPushButton(qtawesome.icon('ph.handshake-light', color='#2c3a45'), "和棋")

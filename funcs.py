@@ -129,6 +129,10 @@ def get_games(user_name):
     return response_body
 
 
+def save_game(user_name, play_info, result, code, level, source=1):
+    db_operation.v2_save_game(user_name, play_info, result, code, level, source)
+
+
 def transform_indexes(index):
     alpha, beta = index[1], index[0]
     count = 1

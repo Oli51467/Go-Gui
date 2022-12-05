@@ -102,10 +102,10 @@ def get_game_by_id(_id):
 
 
 # DAO层 保存棋谱
-def v1_save_game(game):
+def v2_save_game(user_name, play_info, result, code, level, source):
     session = Session()
-    info = Game(user_name=str(game['userName']), play_info=str(game['playInfo']), result=str(game['result']),
-                code=str(game['code']), source=game['source'], level=game['level'])
+    info = Game(user_name=str(user_name), play_info=str(play_info), result=str(result),
+                code=str(code), level=level, source=source)
     session.add(info)
     session.commit()
 
