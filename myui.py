@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 import qtawesome
 from PyQt5.QtCore import QCoreApplication, QTimer, Qt
-from PyQt5.QtWidgets import QLabel, QLineEdit, QMessageBox, QComboBox, QListView, QHeaderView, QAbstractItemView, \
+from PyQt5.QtWidgets import QLabel, QLineEdit, QMessageBox, QComboBox, QListView, QAbstractItemView, \
     QTableWidget, QTableWidgetItem, QTextEdit
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as fc
@@ -149,8 +149,8 @@ class MainUi(QtWidgets.QMainWindow):
             self.cur_pointer, self.undo_pointer = 0, 0
             self.game_item_row = Item.row()
             self.board_review = Board(WIDTH, WIDTH, 0)
-            self.test.setPlainText(info_map[self.game_item_row])
-            self.test.setAlignment(Qt.AlignLeft)
+            self.show_info.setPlainText(info_map[self.game_item_row])
+            self.show_info.setAlignment(Qt.AlignLeft)
             self.last_tip_x, self.last_tip_y = 0, 0
 
     # 查看棋谱详细信息返回到选择棋谱界面
@@ -432,26 +432,22 @@ class MainUi(QtWidgets.QMainWindow):
         self.game_record_table_view = QTableWidget()
         self.game_record_table_view.verticalHeader().setVisible(False)
         self.game_record_table_view.horizontalHeader().setVisible(False)
-        self.game_record_table_view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.game_record_table_view.setColumnCount(1)
-        self.game_record_table_view.setRowCount(5)
+        self.game_record_table_view.setRowCount(10)
+        self.game_record_table_view.horizontalHeader().setStretchLastSection(True)
+        self.game_record_table_view.verticalHeader().setDefaultSectionSize(80)
+        self.game_record_table_view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.game_record_table_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.game_record_table_view.itemClicked.connect(self.on_game_click)
         for index in range(len(games)):
-            item = QTableWidgetItem(games[index]['play_info'] + "\n" + games[index]['result'])
+            game_information = games[index]['play_info'] + "\n" + games[index]['result'] + "\n" + str(games[index]['time'])
+            item = QTableWidgetItem(game_information)
             # 设置每个位置的文本值
             funcs.get_all_moves_and_merge(games[index]['code'])
             # indexes_map.append(funcs.get_all_moves_and_merge(games[index]['code'])[0])
-            info_map.append(games[index]['play_info'] + "\n" + games[index]['result'])
+            info_map.append(game_information)
             self.game_record_table_view.setItem(index, 0, item)
         # 水平方向标签拓展剩下的窗口部分，填满表格
-        self.game_record_table_view.horizontalHeader().setStretchLastSection(True)
-        # 水平方向，表格大小拓展到适当的尺寸
-        self.game_record_table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.game_record_table_view.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.game_record_table_view.resizeColumnsToContents()
-        self.game_record_table_view.resizeRowsToContents()
-        self.game_record_table_view.setVerticalScrollBarPolicy(0)
         self.game_record_table_view.setFixedWidth(180)
         self.select_record_layout.addWidget(self.game_record_table_view, 0, 1, 1, 1)
 
@@ -491,15 +487,16 @@ class MainUi(QtWidgets.QMainWindow):
         self.fast_undo_button.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
         self.fast_undo_button.clicked.connect(self.press_fast_undo)
         # 对局信息展示
-        self.test = QTextEdit("info")
-        self.test.setFixedSize(160, 70)
-        self.test.setReadOnly(True)
+        self.show_info = QTextEdit()
+        self.show_info.setFontPointSize(13)
+        self.show_info.setFixedSize(180, 70)
+        self.show_info.setReadOnly(True)
         # 提示一手按钮
         self.btn_tip = QtWidgets.QPushButton(qtawesome.icon('mdi.language-go', color='#2c3a45'), "AI选点")
         self.btn_tip.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
         self.btn_tip.clicked.connect(self.tip)
 
-        self.view_record_layout.addWidget(self.test)
+        self.view_record_layout.addWidget(self.show_info)
         self.view_record_layout.addWidget(self.proceed_button)
         self.view_record_layout.addWidget(self.fast_proceed_button)
         self.view_record_layout.addWidget(self.undo_button)
@@ -677,6 +674,12 @@ class MainUi(QtWidgets.QMainWindow):
             QLabel {
                 font:bold;
             }
+            QPushButton {
+                border-radius: 10px; border: 2px groove gray;border-style: outset;
+            }
+            QLineEdit {
+                border-radius: 10px; border: 2px groove gray;border-style: outset;
+            }
             '''
         )
         self.left_out.setStyleSheet(
@@ -701,7 +704,25 @@ class MainUi(QtWidgets.QMainWindow):
         self.play_widget.setStyleSheet(
             '''
             *{background-color:#f2f2f2;}
+            QPushButton {
+                border-radius: 10px; border: 2px groove gray;border-style: outset;
+            }
             ''')
+        self.view_record_widget.setStyleSheet (
+            '''
+            QPushButton {
+                border-radius: 10px; border: 2px groove gray;border-style: outset;
+            }
+            QTextEdit {
+                border-radius: 10px; border: 2px groove gray;border-style: outset;
+            }
+            '''
+        )
+        self.game_record_table_view.setStyleSheet(
+            '''
+            border-radius: 10px; border: 2px groove gray;border-style: outset;
+            '''
+        )
 
 
 if __name__ == '__main__':

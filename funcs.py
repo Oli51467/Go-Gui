@@ -124,7 +124,7 @@ def get_games(user_name):
     game_result = db_operation.get_all_games(user_name)
     response_body = []
     for o in game_result:
-        obj = {"id": o.id, "play_info": o.play_info, "result": o.result, "code": o.code}
+        obj = {"id": o.id, "play_info": o.play_info, "result": o.result, "code": o.code, "time": o.end_time}
         response_body.append(obj)
     return response_body
 
