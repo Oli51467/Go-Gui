@@ -1,3 +1,4 @@
+# coding: utf8
 import numpy as np
 import serial
 import serial.tools.list_ports
@@ -24,9 +25,9 @@ games = []
 # indexes_map = []  # 位置 eg: [(4, 4), (4, 16), (5, 5)]
 # moves_map = []  # 坐标 eg:  [D4, H5, T6]
 info_map = []
-WINDOW_WIDTH, WINDOW_HEIGHT = 800, 500
+WINDOW_WIDTH, WINDOW_HEIGHT = 850, 480
 BUTTON_HEIGHT, BUTTON_WIDTH = 40, 150
-CENTER_HEIGHT, CENTER_WIDTH = 460, 460
+CENTER_HEIGHT, CENTER_WIDTH = 450, 450
 OP_BUTTON_HEIGHT, OP_BUTTON_WIDTH = 50, 180
 OP_ICON_HEIGHT, OP_ICON_WIDTH = 25, 25
 
@@ -548,8 +549,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.play_setting_widget = QtWidgets.QWidget()
         self.play_setting_widget.setObjectName('play_setting_widget')
         self.play_setting_layout = QtWidgets.QVBoxLayout()
-        self.play_setting_layout.setSpacing(15)
-        self.play_setting_layout.setContentsMargins(10, 20, 0, 0)
+        self.play_setting_layout.setSpacing(10)
+        self.play_setting_layout.setContentsMargins(0, 20, 0, 0)
         self.play_setting_widget.setLayout(self.play_setting_layout)
         self.play_setting_layout.addWidget(self.label_rules)
         self.play_setting_layout.addWidget(self.edit_size)
@@ -592,7 +593,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.left_layout3.setContentsMargins(0, 0, 0, 0)
         self.game_record_table_view.setContentsMargins(0, 0, 0, 0)
         self.view_record_layout.setContentsMargins(0, 0, 0, 0)
-        # self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 隐藏边框
+        self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 隐藏边框
 
         self.left_button_1.clicked.connect(
             lambda: change_color(self.left_button_1, self.left_button_2))
@@ -753,7 +754,7 @@ class MainUi(QtWidgets.QMainWindow):
 
 if __name__ == '__main__':
     games = funcs.get_games("")
-    QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+    #QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QtWidgets.QApplication(sys.argv)
     gui = MainUi()
     gui.show()
