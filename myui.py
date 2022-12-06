@@ -42,10 +42,18 @@ class MainUi(QtWidgets.QMainWindow):
         self.left_button_2.setEnabled(False)
         self.left_button_1.setEnabled(False)
         self.play_board = Board(WIDTH, WIDTH, 0)
-        # TODO：串口检测 打开串口
-        self.port_check()
         print("用户所选等级为:", funcs.LEVEL)
         print("用户执:", "黑" if funcs.PLAYER == 1 else "白")
+        # 初始化引擎
+        data = {"user_id": "djn", "rules": "", "komi": "", "play": str(funcs.PLAYER), "level": "p", "boardsize": "19"}
+        resp = init_set(data)
+        if not resp:
+            print('连接服务器失败')
+        # 初始化成功 则开始
+        if resp == 1000:
+            print('连接引擎成功')
+        # TODO：串口检测 打开串口
+        self.port_check()
 
     # 串口检测
     def port_check(self):
@@ -161,6 +169,7 @@ class MainUi(QtWidgets.QMainWindow):
             self.show_info.setPlainText(info_map[self.game_item_row])
             self.show_info.setAlignment(Qt.AlignLeft)
             self.last_tip_x, self.last_tip_y = 0, 0
+            funcs.IS_REVIEW = True
 
     # 查看棋谱详细信息返回到选择棋谱界面
     def back2select_game(self):
@@ -169,6 +178,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.select_record_widget.setVisible(True)
         self.game_record_table_view.setVisible(True)
         self.btn_tip.setEnabled(True)
+        funcs.IS_REVIEW = False
 
     # 点击前进的触发事件
     def press_proceed(self):
@@ -746,12 +756,5 @@ if __name__ == '__main__':
     QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QtWidgets.QApplication(sys.argv)
     gui = MainUi()
-    data = {"user_id": "djn", "rules": "", "komi": "", "play": "1", "level": "p", "boardsize": "19"}
-    resp = init_set(data)
-    if not resp:
-        print('连接服务器失败')
-    # 初始化成功 则开始
-    if resp == 1000:
-        print('连接引擎成功')
     gui.show()
     sys.exit(app.exec_())

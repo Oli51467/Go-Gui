@@ -7,6 +7,7 @@ import go.utils
 LEVEL = 0
 PLAYER = 1
 ROW_CLICK = 0
+IS_REVIEW = False
 indexes_map = []
 moves_map = []
 
@@ -33,13 +34,18 @@ def switch2play(window):
 
 
 def switch2review(window):
+    if IS_REVIEW:
+        window.game_record_table_view.setVisible(False)
+        window.select_record_widget.setVisible(False)
+        window.view_record_widget.setVisible(True)
+    else:
+        window.game_record_table_view.setVisible(True)
+        window.select_record_widget.setVisible(True)
+        window.view_record_widget.setVisible(False)
     window.game_record_widget.setVisible(True)
-    window.game_record_table_view.setVisible(True)
-    window.select_record_widget.setVisible(True)
     window.play_widget.setVisible(False)
     window.play_func_widget.setVisible(False)
     window.play_setting_widget.setVisible(False)
-    window.view_record_widget.setVisible(False)
 
 
 # 画棋子
