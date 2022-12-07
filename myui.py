@@ -25,7 +25,7 @@ games = []
 # indexes_map = []  # 位置 eg: [(4, 4), (4, 16), (5, 5)]
 # moves_map = []  # 坐标 eg:  [D4, H5, T6]
 info_map = []
-WINDOW_WIDTH, WINDOW_HEIGHT = 850, 480
+WINDOW_WIDTH, WINDOW_HEIGHT = 820, 480
 BUTTON_HEIGHT, BUTTON_WIDTH = 40, 150
 CENTER_HEIGHT, CENTER_WIDTH = 450, 450
 OP_BUTTON_HEIGHT, OP_BUTTON_WIDTH = 50, 180
@@ -637,11 +637,14 @@ class MainUi(QtWidgets.QMainWindow):
             '''
             QLabel{
             border:none;
-            font-size:23px;
+            font-size:25px;
             font-weight:500;
             color:#2c3a45;
             padding-left:30px;
-             }
+            }
+            QPushButton {
+                font-size:16px;
+            }
             ''')
         self.left_widget_enter.setStyleSheet(
             '''
@@ -673,13 +676,13 @@ class MainUi(QtWidgets.QMainWindow):
                 color:#ffffff;
                 border:none;
                 font-weight:600;
-                font-size:16px;
+                font-size:18px;
              }
             QPushButton{
                 color:#ffffff;
                 border:none;
                 font-weight:600;
-                font-size:16px;
+                font-size:18px;
              }
             ''')
         self.left_widget.setStyleSheet(
@@ -687,7 +690,7 @@ class MainUi(QtWidgets.QMainWindow):
             *{background-color:#fafafa;}
             QPushButton{
                 border:none;
-                font-size:10px;
+                font-size:13px;
                 text-align:left;
                 padding-left:30px;
                 height:70px;
@@ -700,12 +703,18 @@ class MainUi(QtWidgets.QMainWindow):
             '''
             QLabel {
                 font:bold;
+                font-size:18px;
             }
             QPushButton {
-                border-radius: 10px; border: 2px groove gray;border-style: outset;
+                border-radius: 10px;
+                border: 2px groove gray;
+                border-style: outset;
+                font-size: 16px;
             }
             QLineEdit {
-                border-radius: 10px; border: 2px groove gray;border-style: outset;
+                border-radius: 10px;
+                border: 2px groove gray;
+                border-style: outset;
             }
             '''
         )
@@ -715,7 +724,7 @@ class MainUi(QtWidgets.QMainWindow):
                 text-align:right;
                 padding-right:30px;
                 color:#808080;
-                font-size:14px;
+                font-size:18px;
             }
             ''')
         self.left_username.setStyleSheet(
@@ -732,22 +741,34 @@ class MainUi(QtWidgets.QMainWindow):
             '''
             *{background-color:#f2f2f2;}
             QPushButton {
-                border-radius: 10px; border: 2px groove gray;border-style: outset;
+                border-radius: 10px;
+                border: 2px groove gray;
+                border-style: outset;
+                font-size: 16px;
             }
             ''')
         self.view_record_widget.setStyleSheet (
             '''
             QPushButton {
-                border-radius: 10px; border: 2px groove gray;border-style: outset;
+                border-radius: 10px;
+                border: 2px groove gray;
+                border-style: outset;
+                font-size: 16px;
             }
             QTextEdit {
-                border-radius: 10px; border: 2px groove gray;border-style: outset;
+                border-radius: 10px;
+                border: 2px groove gray;
+                border-style: outset;
+                font-size: 16px;
             }
             '''
         )
         self.game_record_table_view.setStyleSheet(
             '''
-            border-radius: 10px; border: 2px groove gray;border-style: outset;
+            border-radius: 10px;
+            border: 2px groove gray;
+            border-style: outset;
+            font-size: 16px;
             '''
         )
 
