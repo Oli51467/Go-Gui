@@ -6,7 +6,8 @@ import config
 
 
 def init_set(data):
-    resp = requests.post(url=config.configs['production'].REQUEST_IP + "set", json=data, headers={"Connection": "close"})
+    resp = requests.post(url=config.configs['production'].REQUEST_IP + "set", json=data,
+                         headers={"Connection": "close"})
     if str(resp).find('502') != -1:
         return False
     return json.loads(resp.text)['code']
@@ -20,7 +21,11 @@ def go(data):
 
 
 def tip(data):
-    resp = requests.post(url=config.configs['production'].REQUEST_IP + "WholeGameTip", json=data, headers={"Connection": "close"})
-    resp_data = json.loads(resp.text)['data']
-    print("resp data:", resp_data)
-    return resp_data['move']
+    resp = requests.post(url=config.configs['production'].REQUEST_IP + "WholeGameTip", json=data,
+                         headers={"Connection": "close"})
+    try:
+        resp_data = json.loads(resp.text)['data']
+        print("resp data:", resp_data)
+        return resp_data['move']
+    except:
+        return 0

@@ -6,21 +6,23 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 import qtawesome
 from PyQt5.QtCore import QCoreApplication, QTimer, Qt
-from PyQt5.QtWidgets import QLabel, QLineEdit, QMessageBox, QComboBox, QListView, QAbstractItemView, \
-    QTableWidget, QTableWidgetItem, QTextEdit
+from PyQt5.QtWidgets import QLabel, QLineEdit, QMessageBox, QAbstractItemView, \
+    QTableWidget, QTableWidgetItem, QTextEdit, QWidget
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as fc
 
 import db_operation
 import funcs
 from apis import init_set, tip
-from funcs import draw_stars, change_color, draw_grids, moves_map, indexes_map, get_result, get_info, save_game_as_sgf, LEVEL
+from funcs import draw_stars, change_color, draw_grids, moves_map, indexes_map, get_result, get_info, save_game_as_sgf, \
+    LEVEL
 from go.models import Board, WIDTH
 from go.utils import transform_indexes
 
 global USER_NAME
 INIT = False
-levels = ["1段", "2段", "3段", "4段", "5段"]
+levels = ['9级', '8级', '7级', '6级', '5级', '4级', '3级', '2级', '1级', '1段', '2段', '3段', '4段', '5段', '6段',
+          '职业']
 games = []
 # indexes_map = []  # 位置 eg: [(4, 4), (4, 16), (5, 5)]
 # moves_map = []  # 坐标 eg:  [D4, H5, T6]
@@ -30,6 +32,112 @@ BUTTON_HEIGHT, BUTTON_WIDTH = 40, 150
 CENTER_HEIGHT, CENTER_WIDTH = 450, 450
 OP_BUTTON_HEIGHT, OP_BUTTON_WIDTH = 50, 180
 OP_ICON_HEIGHT, OP_ICON_WIDTH = 25, 25
+LEVEL_BUTTON_HEIGHT, LEVEL_BUTTON_WIDTH = 50, 65
+
+
+class ChooseLevelWindow(QWidget):
+    def choose_level(self, level):
+        gui.btn_choose_level.setText(str(levels[level]))
+        funcs.LEVEL = level
+        self.close()
+
+    def __init__(self):
+        super().__init__()
+        self.main_layout = QtWidgets.QGridLayout()
+        self.main_layout.setSpacing(0)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.label_image = QLabel(self)
+        png = QtGui.QPixmap('images/login_image.png')
+        self.label_image.setScaledContents(True)  # 需要在图片显示之前进行设置
+        self.label_image.setPixmap(png)
+        self.label_image.setFixedSize(350, 350)
+
+        self.right_widget = QtWidgets.QWidget()  # 右侧部件
+        self.right_widget.setObjectName('right_layout')
+        self.right_layout = QtWidgets.QGridLayout()
+        self.right_widget.setLayout(self.right_layout)
+
+        self.btn_level1 = QtWidgets.QPushButton("9级")
+        self.btn_level1.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level1.clicked.connect(lambda: self.choose_level(0))
+        self.btn_level2 = QtWidgets.QPushButton("8级")
+        self.btn_level2.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level2.clicked.connect(lambda: self.choose_level(1))
+        self.btn_level3 = QtWidgets.QPushButton("7级")
+        self.btn_level3.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level3.clicked.connect(lambda: self.choose_level(2))
+        self.btn_level4 = QtWidgets.QPushButton("6级")
+        self.btn_level4.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level4.clicked.connect(lambda: self.choose_level(3))
+        self.btn_level5 = QtWidgets.QPushButton("5级")
+        self.btn_level5.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level5.clicked.connect(lambda: self.choose_level(4))
+        self.btn_level6 = QtWidgets.QPushButton("4级")
+        self.btn_level6.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level6.clicked.connect(lambda: self.choose_level(5))
+        self.btn_level7 = QtWidgets.QPushButton("3级")
+        self.btn_level7.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level7.clicked.connect(lambda: self.choose_level(6))
+        self.btn_level8 = QtWidgets.QPushButton("2级")
+        self.btn_level8.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level8.clicked.connect(lambda: self.choose_level(7))
+        self.btn_level9 = QtWidgets.QPushButton("1级")
+        self.btn_level9.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level9.clicked.connect(lambda: self.choose_level(8))
+        self.btn_level10 = QtWidgets.QPushButton("1段")
+        self.btn_level10.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level10.clicked.connect(lambda: self.choose_level(9))
+        self.btn_level11 = QtWidgets.QPushButton("2段")
+        self.btn_level11.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level11.clicked.connect(lambda: self.choose_level(10))
+        self.btn_level12 = QtWidgets.QPushButton("3段")
+        self.btn_level12.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level12.clicked.connect(lambda: self.choose_level(11))
+        self.btn_level13 = QtWidgets.QPushButton("4段")
+        self.btn_level13.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level13.clicked.connect(lambda: self.choose_level(12))
+        self.btn_level14 = QtWidgets.QPushButton("5段")
+        self.btn_level14.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level14.clicked.connect(lambda: self.choose_level(13))
+        self.btn_level15 = QtWidgets.QPushButton("6段")
+        self.btn_level15.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level15.clicked.connect(lambda: self.choose_level(14))
+        self.btn_level16 = QtWidgets.QPushButton("职业")
+        self.btn_level16.setFixedSize(LEVEL_BUTTON_WIDTH, LEVEL_BUTTON_HEIGHT)
+        self.btn_level16.clicked.connect(lambda: self.choose_level(15))
+        self.right_layout.addWidget(self.btn_level1, 0, 0, 1, 1)
+        self.right_layout.addWidget(self.btn_level2, 0, 1, 1, 1)
+        self.right_layout.addWidget(self.btn_level3, 0, 2, 1, 1)
+        self.right_layout.addWidget(self.btn_level4, 0, 3, 1, 1)
+        self.right_layout.addWidget(self.btn_level5, 1, 0, 1, 1)
+        self.right_layout.addWidget(self.btn_level6, 1, 1, 1, 1)
+        self.right_layout.addWidget(self.btn_level7, 1, 2, 1, 1)
+        self.right_layout.addWidget(self.btn_level8, 1, 3, 1, 1)
+        self.right_layout.addWidget(self.btn_level9, 2, 0, 1, 1)
+        self.right_layout.addWidget(self.btn_level10, 2, 1, 1, 1)
+        self.right_layout.addWidget(self.btn_level11, 2, 2, 1, 1)
+        self.right_layout.addWidget(self.btn_level12, 2, 3, 1, 1)
+        self.right_layout.addWidget(self.btn_level13, 3, 0, 1, 1)
+        self.right_layout.addWidget(self.btn_level14, 3, 1, 1, 1)
+        self.right_layout.addWidget(self.btn_level15, 3, 2, 1, 1)
+        self.right_layout.addWidget(self.btn_level16, 3, 3, 1, 1)
+
+        self.main_layout.addWidget(self.label_image, 0, 0, 1, 1)
+        self.main_layout.addWidget(self.right_widget, 0, 1, 1, 1)
+        self.setFixedSize(700, 350)
+        self.setLayout(self.main_layout)
+
+        self.right_widget.setStyleSheet(
+            '''
+            QPushButton {
+                border-radius: 10px;
+                border: 2px groove gray;
+                border-style: outset;
+                font-size: 16px;
+            }
+            '''
+        )
 
 
 class MainUi(QtWidgets.QMainWindow):
@@ -38,10 +146,6 @@ class MainUi(QtWidgets.QMainWindow):
         self.init_ui()
 
     def begin_play(self):
-        self.play_setting_widget.setVisible(False)
-        self.play_func_widget.setVisible(True)
-        self.left_button_2.setEnabled(False)
-        self.left_button_1.setEnabled(False)
         self.play_board = Board(WIDTH, WIDTH, 0)
         print("用户所选等级为:", funcs.LEVEL)
         print("用户执:", "黑" if funcs.PLAYER == 1 else "白")
@@ -49,12 +153,18 @@ class MainUi(QtWidgets.QMainWindow):
         data = {"user_id": "djn", "rules": "", "komi": "", "play": str(funcs.PLAYER), "level": "p", "boardsize": "19"}
         resp = init_set(data)
         if not resp:
+            QMessageBox.critical(self, "错误", "请检查网络连接")
             print('连接服务器失败')
+            return
         # 初始化成功 则开始
         if resp == 1000:
             print('连接引擎成功')
-        # TODO：串口检测 打开串口
-        self.port_check()
+            self.play_setting_widget.setVisible(False)
+            self.play_func_widget.setVisible(True)
+            self.left_button_2.setEnabled(False)
+            self.left_button_1.setEnabled(False)
+            # TODO：串口检测 打开串口
+            self.port_check()
 
     # 串口检测
     def port_check(self):
@@ -118,9 +228,6 @@ class MainUi(QtWidgets.QMainWindow):
             '''
         )
 
-    def change_level(self, i):
-        funcs.LEVEL = i
-
     # 画下棋的棋盘
     def draw_origin_play_board(self):
         self.fig = plt.Figure()  # 公共属性figure
@@ -156,16 +263,16 @@ class MainUi(QtWidgets.QMainWindow):
         self.canvas_record.draw()
 
     # 选择一个棋谱的点击事件
-    def on_game_click(self, Item=None):
+    def on_game_click(self, item=None):
         # 如果单元格对象为空
-        if Item is None:
+        if item is None:
             return
         else:
-            funcs.ROW_CLICK = Item.row()  # 获取行数
+            funcs.ROW_CLICK = item.row()  # 获取行数
             self.game_record_table_view.setVisible(False)
             self.view_record_widget.setVisible(True)
             self.cur_pointer, self.undo_pointer = 0, 0
-            self.game_item_row = Item.row()
+            self.game_item_row = item.row()
             self.board_review = Board(WIDTH, WIDTH, 0)
             self.show_info.setPlainText(info_map[self.game_item_row])
             self.show_info.setAlignment(Qt.AlignLeft)
@@ -195,21 +302,22 @@ class MainUi(QtWidgets.QMainWindow):
 
     # 前进一步
     def proceed(self):
-        last_x, last_y = self.board_review.game_record.get_last_turn().x, self.board_review.game_record.get_last_turn().y   # 上一步
+        last_x, last_y = self.board_review.game_record.get_last_turn().x, self.board_review.game_record.get_last_turn().y  # 上一步
         player = self.board_review.get_player()  # 当前玩家
         self.board_review.play(indexes_map[self.game_item_row][self.cur_pointer][0],
-                               indexes_map[self.game_item_row][self.cur_pointer][1], player)   # 在棋盘上走棋
+                               indexes_map[self.game_item_row][self.cur_pointer][1], player)  # 在棋盘上走棋
         self.board_review.next_player()
         index_x, index_y = indexes_map[self.game_item_row][self.cur_pointer][0], indexes_map[self.game_item_row][self.cur_pointer][1]
         # print(index_x, index_y)
         self.stones_plot_review[index_x, index_y] = funcs.draw_stone(index_y - 1, 19 - index_x,
                                                                      'k' if player.get_identifier() == 1 else 'w',
-                                                                     self.ax_record)    # 将落子位置关联嵌入
-        if self.cur_pointer != 0:   # 画红点标记 先移除上一步的红点标记
+                                                                     self.ax_record)  # 将落子位置关联嵌入
+        if self.cur_pointer != 0:  # 画红点标记 先移除上一步的红点标记
             self.red_point_plot[last_x, last_y].pop().remove()
             self.red_point_plot[last_x, last_y] = None
-        self.red_point_plot[index_x, index_y] = funcs.draw_red_point(self.ax_record, index_y - 1, 19 - index_x)  # 当前位置标记嵌入
-        captured_stones = self.board_review.captured_stones     # 走棋后被吃的棋子
+        self.red_point_plot[index_x, index_y] = funcs.draw_red_point(self.ax_record, index_y - 1,
+                                                                     19 - index_x)  # 当前位置标记嵌入
+        captured_stones = self.board_review.captured_stones  # 走棋后被吃的棋子
         for stones in captured_stones:  # remove the plot
             self.stones_plot_review[stones.x, stones.y].pop().remove()
             self.stones_plot_review[stones.x, stones.y] = None
@@ -231,7 +339,7 @@ class MainUi(QtWidgets.QMainWindow):
         if self.undo_pointer <= 0:
             return
         last_move = self.board_review.get_point(self.board_review.game_record.get_last_turn().x,
-                                                self.board_review.game_record.get_last_turn().y)    # 获取上一步
+                                                self.board_review.game_record.get_last_turn().y)  # 获取上一步
         # 移除棋子plot
         self.stones_plot_review[last_move.x, last_move.y].pop().remove()
         self.stones_plot_review[last_move.x, last_move.y] = None
@@ -240,7 +348,9 @@ class MainUi(QtWidgets.QMainWindow):
         self.red_point_plot[last_move.x, last_move.y] = None
         captured_stones = self.board_review.game_record.get_last_turn().captured_stones  # 被吃的棋子
         for stones in captured_stones:  # 恢复被吃的棋子 重新plot进去
-            self.stones_plot_review[stones.x, stones.y] = funcs.draw_stone(stones.y - 1, 19 - stones.x, "k" if self.board_review.get_player().get_identifier() == 1 else "w", self.ax_record)
+            self.stones_plot_review[stones.x, stones.y] = funcs.draw_stone(stones.y - 1, 19 - stones.x,
+                                                                           "k" if self.board_review.get_player().get_identifier() == 1 else "w",
+                                                                           self.ax_record)
         self.board_review.undo()
         self.undo_pointer -= 1
         # # 重新标记上一步
@@ -251,7 +361,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.canvas_record.draw()
 
     def redo(self):
-        last_x, last_y = self.board_review.game_record.get_last_turn().x, self.board_review.game_record.get_last_turn().y   # 获取上一步
+        last_x, last_y = self.board_review.game_record.get_last_turn().x, self.board_review.game_record.get_last_turn().y  # 获取上一步
         # 移除上一步的标记
         if self.undo_pointer != 0 and self.cur_pointer != 0:
             self.red_point_plot[last_x, last_y].pop().remove()
@@ -269,7 +379,8 @@ class MainUi(QtWidgets.QMainWindow):
                                                                              'k' if self.board_review.get_player().get_identifier() == 2 else 'w',
                                                                              self.ax_record)
         # 标记新的一步
-        self.red_point_plot[last_move.x, last_move.y] = funcs.draw_red_point(self.ax_record, last_move.y - 1, 19 - last_move.x)
+        self.red_point_plot[last_move.x, last_move.y] = funcs.draw_red_point(self.ax_record, last_move.y - 1,
+                                                                             19 - last_move.x)
         self.undo_pointer += 1
         self.canvas_record.draw()
 
@@ -297,14 +408,18 @@ class MainUi(QtWidgets.QMainWindow):
             self.undo()
 
     def tip(self):
-        self.btn_tip.setEnabled(False)
-        print(self.cur_pointer, self.undo_pointer)
         # 此时局面的索引是undo_pointer指示的
         if self.undo_pointer < self.cur_pointer:
-            tip_data = {"user_id": "djn", "initialStones": [], "moves": moves_map[self.game_item_row][:self.undo_pointer]}
+            tip_data = {"user_id": "djn", "initialStones": [],
+                        "moves": moves_map[self.game_item_row][:self.undo_pointer]}
         else:
-            tip_data = {"user_id": "djn", "initialStones": [], "moves": moves_map[self.game_item_row][:self.undo_pointer]}
+            tip_data = {"user_id": "djn", "initialStones": [],
+                        "moves": moves_map[self.game_item_row][:self.undo_pointer]}
         go_resp = tip(tip_data)
+        if go_resp == 0:
+            QMessageBox.critical(self, "错误", "请检查网络连接")
+            return
+        self.btn_tip.setEnabled(False)
         engine_x, engine_y = transform_indexes(go_resp)
         self.red_point_plot[engine_x, engine_y] = funcs.draw_tip_point(self.ax_record, engine_y - 1, 19 - engine_x)
         self.last_tip_x, self.last_tip_y = engine_x, engine_y
@@ -428,8 +543,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.play_func_widget.setVisible(False)
 
         # 右边栏 下棋前的设置
-        self.label_rules = QLabel("规则")
-        self.label_level = QLabel("选择段位")
+        self.label_rules = QLabel("对局设置")
         self.edit_rules = QLineEdit("分先")
         self.edit_rules.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
         self.edit_rules.setReadOnly(True)
@@ -439,14 +553,36 @@ class MainUi(QtWidgets.QMainWindow):
         self.edit_komi = QLineEdit("黑贴3又3/4子")
         self.edit_komi.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
         self.edit_komi.setReadOnly(True)
-        self.comboBox_level = QComboBox(self)
-        self.comboBox_level.addItems(levels)
-        self.comboBox_level.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
-        self.comboBox_level.setStyleSheet("QAbstractItemView::item {height: 70px;}")
-        self.comboBox_level.setView(QListView())
-        # 信号
-        # self.comboBox_level.currentIndexChanged[str].connect(self.change_level)  # 条目发生改变，发射信号，传递条目内容
-        self.comboBox_level.currentIndexChanged[int].connect(self.change_level)  # 条目发生改变，发射信号，传递条目索引
+        self.btn_choose_black = QtWidgets.QPushButton("执黑")
+        self.btn_choose_black.setDown(True)
+        self.btn_choose_black.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
+        self.btn_choose_white = QtWidgets.QPushButton("执白")
+        self.btn_choose_white.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
+        self.btn_choose_black.clicked.connect(
+            lambda: self.change_side(down=self.btn_choose_black, up=self.btn_choose_white))
+        self.btn_choose_white.clicked.connect(
+            lambda: self.change_side(down=self.btn_choose_white, up=self.btn_choose_black))
+        self.btn_play = QtWidgets.QPushButton(qtawesome.icon('mdi.language-go', color='#2c3a45'), "开始下棋")
+        self.btn_play.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
+        self.btn_choose_level = QtWidgets.QPushButton("选择段位")
+        self.btn_choose_level.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
+
+        self.play_setting_widget = QtWidgets.QWidget()
+        self.play_setting_widget.setObjectName('play_setting_widget')
+        self.play_setting_layout = QtWidgets.QVBoxLayout()
+        self.play_setting_layout.setSpacing(13)
+        self.play_setting_layout.setContentsMargins(0, 20, 0, 0)
+        self.play_setting_widget.setLayout(self.play_setting_layout)
+        self.play_setting_layout.addWidget(self.label_rules)
+        self.play_setting_layout.addWidget(self.edit_size)
+        self.play_setting_layout.addWidget(self.edit_rules)
+        self.play_setting_layout.addWidget(self.edit_komi)
+        self.play_setting_layout.addWidget(self.btn_choose_black)
+        self.play_setting_layout.addWidget(self.btn_choose_white)
+        self.play_setting_layout.addWidget(self.btn_choose_level)
+        self.play_setting_layout.addWidget(self.btn_play)
+        self.play_setting_layout.addStretch()
+        self.btn_play.clicked.connect(self.begin_play)
 
         # 右边 棋谱栏
         self.select_record_widget = QtWidgets.QWidget()  # 创建右侧部件
@@ -467,7 +603,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.game_record_table_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.game_record_table_view.itemClicked.connect(self.on_game_click)
         for index in range(len(games)):
-            game_information = games[index]['play_info'] + "\n" + games[index]['result'] + "\n" + str(games[index]['time'])
+            game_information = games[index]['play_info'] + "\n" + games[index]['result'] + "\n" + str(
+                games[index]['time'])
             item = QTableWidgetItem(game_information)
             # 设置每个位置的文本值
             funcs.get_all_moves_and_merge(games[index]['code'])
@@ -532,37 +669,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.view_record_layout.addWidget(self.btn_return2record)
         self.view_record_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.btn_choose_black = QtWidgets.QPushButton("执黑")
-        self.btn_choose_black.setDown(True)
-        self.btn_choose_black.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
-        self.btn_choose_white = QtWidgets.QPushButton("执白")
-        self.btn_choose_white.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
-        self.btn_choose_black.clicked.connect(
-            lambda: self.change_side(down=self.btn_choose_black, up=self.btn_choose_white))
-        self.btn_choose_white.clicked.connect(
-            lambda: self.change_side(down=self.btn_choose_white, up=self.btn_choose_black))
-        self.btn_play = QtWidgets.QPushButton(qtawesome.icon('mdi.language-go', color='#2c3a45'), "开始下棋")
-        self.btn_play.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
         self.play_widget.setFixedSize(CENTER_HEIGHT, CENTER_WIDTH)
         self.game_record_widget.setFixedSize(CENTER_HEIGHT, CENTER_WIDTH)
-
-        self.play_setting_widget = QtWidgets.QWidget()
-        self.play_setting_widget.setObjectName('play_setting_widget')
-        self.play_setting_layout = QtWidgets.QVBoxLayout()
-        self.play_setting_layout.setSpacing(10)
-        self.play_setting_layout.setContentsMargins(0, 20, 0, 0)
-        self.play_setting_widget.setLayout(self.play_setting_layout)
-        self.play_setting_layout.addWidget(self.label_rules)
-        self.play_setting_layout.addWidget(self.edit_size)
-        self.play_setting_layout.addWidget(self.edit_rules)
-        self.play_setting_layout.addWidget(self.edit_komi)
-        self.play_setting_layout.addWidget(self.btn_choose_black)
-        self.play_setting_layout.addWidget(self.btn_choose_white)
-        self.play_setting_layout.addWidget(self.label_level)
-        self.play_setting_layout.addWidget(self.comboBox_level)
-        self.play_setting_layout.addWidget(self.btn_play)
-        self.play_setting_layout.addStretch()
-        self.btn_play.clicked.connect(self.begin_play)
 
         self.left_layout.addWidget(self.left_widget_enter, 0, 0, 3, 2)  # 左侧部件在第0行第0列，占3行3列
         self.left_layout.addWidget(self.left_widget2, 3, 0, 2, 2)  # 左侧部件在第3行第0列，占2行3列
@@ -643,7 +751,7 @@ class MainUi(QtWidgets.QMainWindow):
             padding-left:30px;
             }
             QPushButton {
-                font-size:16px;
+                font-size:14px;
             }
             ''')
         self.left_widget_enter.setStyleSheet(
@@ -676,13 +784,13 @@ class MainUi(QtWidgets.QMainWindow):
                 color:#ffffff;
                 border:none;
                 font-weight:600;
-                font-size:18px;
+                font-size:14px;
              }
             QPushButton{
                 color:#ffffff;
                 border:none;
                 font-weight:600;
-                font-size:18px;
+                font-size:14px;
              }
             ''')
         self.left_widget.setStyleSheet(
@@ -733,7 +841,7 @@ class MainUi(QtWidgets.QMainWindow):
                 text-align:left;
                 padding-left:30px;
                 color:#ffffff;
-                font-size:16px;
+                font-size:14px;
             }
             ''')
 
@@ -744,22 +852,22 @@ class MainUi(QtWidgets.QMainWindow):
                 border-radius: 10px;
                 border: 2px groove gray;
                 border-style: outset;
-                font-size: 16px;
+                font-size: 14px;
             }
             ''')
-        self.view_record_widget.setStyleSheet (
+        self.view_record_widget.setStyleSheet(
             '''
             QPushButton {
                 border-radius: 10px;
                 border: 2px groove gray;
                 border-style: outset;
-                font-size: 16px;
+                font-size: 14px;
             }
             QTextEdit {
                 border-radius: 10px;
                 border: 2px groove gray;
                 border-style: outset;
-                font-size: 16px;
+                font-size: 14px;
             }
             '''
         )
@@ -768,15 +876,18 @@ class MainUi(QtWidgets.QMainWindow):
             border-radius: 10px;
             border: 2px groove gray;
             border-style: outset;
-            font-size: 16px;
+            font-size: 14px;
             '''
         )
 
 
 if __name__ == '__main__':
     games = funcs.get_games("")
-    #QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+    # QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QtWidgets.QApplication(sys.argv)
     gui = MainUi()
+    level_gui = ChooseLevelWindow()
+    gui.btn_choose_level.clicked.connect(level_gui.show)
+
     gui.show()
     sys.exit(app.exec_())
