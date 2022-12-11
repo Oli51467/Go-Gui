@@ -127,6 +127,7 @@ class ChooseLevelWindow(QWidget):
         self.main_layout.addWidget(self.right_widget, 0, 1, 1, 1)
         self.setFixedSize(700, 350)
         self.setLayout(self.main_layout)
+        self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 隐藏边框
 
         self.right_widget.setStyleSheet(
             '''
