@@ -37,7 +37,7 @@ LEVEL_BUTTON_HEIGHT, LEVEL_BUTTON_WIDTH = 50, 65
 
 class ChooseLevelWindow(QWidget):
     def choose_level(self, level):
-        gui.btn_choose_level.setText(str(levels[level]))
+        gui.btn_choose_level.setText("对手: " + str(levels[level]))
         funcs.LEVEL = level
         self.close()
 
@@ -48,7 +48,7 @@ class ChooseLevelWindow(QWidget):
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
         self.label_image = QLabel(self)
-        png = QtGui.QPixmap('images/login_image.png')
+        png = QtGui.QPixmap('./images/login_image.png')
         self.label_image.setScaledContents(True)  # 需要在图片显示之前进行设置
         self.label_image.setPixmap(png)
         self.label_image.setFixedSize(350, 350)
@@ -760,9 +760,9 @@ class MainUi(QtWidgets.QMainWindow):
             *{color:#2c3a45;}
             QPushButton:hover{background:#e6e6e6;}
             QPushButton{
-            border:none;
-            font-weight:600;
-            font-size:14px;
+                border:none;
+                font-weight:600;
+                font-size:14px;
             }
             ''')
         self.left_widget2.setStyleSheet(
