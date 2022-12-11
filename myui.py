@@ -1,6 +1,7 @@
 # coding: utf8
 import numpy as np
 import serial
+import cv2
 import serial.tools.list_ports
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
@@ -48,7 +49,12 @@ class ChooseLevelWindow(QWidget):
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
         self.label_image = QLabel(self)
-        png = QtGui.QPixmap('./images/login_image.png')
+        # png = QtGui.QPixmap('./images/login_image.png')
+        img_path = "./images/login_image.png"
+        img = cv2.imread(img_path)  # 通过cv读取图片
+        RGBImg = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)   # 通道转化
+        image = QtGui.QImage(RGBImg, RGBImg.shape[1], RGBImg.shape[0], QtGui.QImage.Format_RGB888) # 将图片转化成Qt可读格式
+        png = QtGui.QPixmap(image)
         self.label_image.setScaledContents(True)  # 需要在图片显示之前进行设置
         self.label_image.setPixmap(png)
         self.label_image.setFixedSize(350, 350)
@@ -127,7 +133,7 @@ class ChooseLevelWindow(QWidget):
         self.main_layout.addWidget(self.right_widget, 0, 1, 1, 1)
         self.setFixedSize(700, 350)
         self.setLayout(self.main_layout)
-        self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 隐藏边框
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint)
 
         self.right_widget.setStyleSheet(
             '''
