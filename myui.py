@@ -11,21 +11,23 @@ from PyQt5.QtWidgets import QLabel, QLineEdit, QMessageBox, QAbstractItemView, \
     QTableWidget, QTableWidgetItem, QTextEdit, QWidget
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as fc
+from threads import SerialThread
 
 import db_operation
 import funcs
-from apis import init_set, tip
+from apis import init_set, tip, go
 from funcs import draw_stars, change_color, draw_grids, moves_map, indexes_map, get_result, get_info, save_game_as_sgf, \
     LEVEL
 from go.models import Board, WIDTH
-from go.utils import transform_indexes
+from go.utils import transform_indexes, get_position2index
 
 global USER_NAME
 INIT = False
 levels = ['9级', '8级', '7级', '6级', '5级', '4级', '3级', '2级', '1级', '1段', '2段', '3段', '4段', '5段', '6段',
           '职业']
 games = []
-# indexes_map = []  # 位置 eg: [(4, 4), (4, 16), (5, 5)]
+fake_moves = [(4, 4)]  # 位置 eg: [(4, 4), (4, 16), (5, 5)]
+fake_index = 0
 # moves_map = []  # 坐标 eg:  [D4, H5, T6]
 info_map = []
 WINDOW_WIDTH, WINDOW_HEIGHT = 820, 480
@@ -52,8 +54,8 @@ class ChooseLevelWindow(QWidget):
         # png = QtGui.QPixmap('./images/login_image.png')
         img_path = "./images/login_image.png"
         img = cv2.imread(img_path)  # 通过cv读取图片
-        RGBImg = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)   # 通道转化
-        image = QtGui.QImage(RGBImg, RGBImg.shape[1], RGBImg.shape[0], QtGui.QImage.Format_RGB888) # 将图片转化成Qt可读格式
+        RGBImg = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # 通道转化
+        image = QtGui.QImage(RGBImg, RGBImg.shape[1], RGBImg.shape[0], QtGui.QImage.Format_RGB888)  # 将图片转化成Qt可读格式
         png = QtGui.QPixmap(image)
         self.label_image.setScaledContents(True)  # 需要在图片显示之前进行设置
         self.label_image.setPixmap(png)
@@ -147,17 +149,18 @@ class ChooseLevelWindow(QWidget):
         )
 
 
-class MainUi(QtWidgets.QMainWindow):
-    def __init__(self):
-        super().__init__()
+class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
+    def __init__(self, parent=None):
+        super(MainUi, self).__init__(parent)
         self.init_ui()
 
-    def begin_play(self):
+    # 按下开始下棋按钮的点击事件
+    def press_play(self):
         self.play_board = Board(WIDTH, WIDTH, 0)
         print("用户所选等级为:", funcs.LEVEL)
         print("用户执:", "黑" if funcs.PLAYER == 1 else "白")
         # 初始化引擎
-        data = {"user_id": "djn", "rules": "", "komi": "", "play": str(funcs.PLAYER), "level": "p", "boardsize": "19"}
+        data = {"user_id": "djn", "rules": "", "komi": "", "play": str(funcs.PLAYER), "level": "p", "boardsize": "19", "initialStones": []}
         resp = init_set(data)
         if not resp:
             QMessageBox.critical(self, "错误", "请检查网络连接")
@@ -170,41 +173,54 @@ class MainUi(QtWidgets.QMainWindow):
             self.play_func_widget.setVisible(True)
             self.left_button_2.setEnabled(False)
             self.left_button_1.setEnabled(False)
+            self.play_stone_plot = np.full((20, 20), None)
             # TODO：串口检测 打开串口
-            self.port_check()
+            self.serial_thread = SerialThread()
+            self.serial_thread.port_open()
+            self.serial_thread.start()
 
-    # 串口检测
-    def port_check(self):
-        # 检测所有存在的串口，将信息存储在字典中
-        self.Com_Dict = {}
-        port_list = list(serial.tools.list_ports.comports())
-        for port in port_list:
-            self.Com_Dict["%s" % port[0]] = "%s" % port[1]
-            print(list(port)[0])
-            # self.s1__box_2.addItem(port[0])
-        if len(self.Com_Dict) == 0:
-            print('无串口')
+    #  模拟接收串口发来的数据
+    # def start_play(self):
+    #     index_x, index_y = fake_moves[self.fake_index][0], fake_moves[self.fake_index][1]
+    #     print("行列坐标：", index_x, index_y)
+    #     play_index = get_position2index(index_x, index_y)
+    #     print("棋盘坐标：", play_index)
+    #     player_ = self.play_board.get_player()
+    #     self.play(index_x, index_y, play_index, True, player_)
 
-    # 打开串口
-    def port_open(self):
-        self.ser = serial.Serial(port="COM17", baudrate=9600)
-
-        try:
-            self.ser.open()
-        except:
-            QMessageBox.critical(self, "Port Error", "此串口不能被打开！")
-            return None
-
-        # 打开串口接收定时器，周期为2ms
-        self.timer.start(2)
-
-        if self.ser.isOpen():
-            print("串口状态（已开启）")
+    # 落子
+    def play(self, index_x, index_y, board_index, is_engine, player):
+        if self.play_board.play(index_x, index_y, player) is True:
+            print('正常落子')
+            # 坐标变换后插入到plot
+            self.play_stone_plot[index_x][index_y] = funcs.draw_stone(index_y - 1, 19 - index_x,
+                                                                      'k' if player.get_identifier() == 1 else 'w',
+                                                                      self.ax)
+            self.play_board.next_player()
+            captured_stones = self.play_board.captured_stones  # 吃子集合
+            result = []
+            for stones in captured_stones:
+                self.play_stone_plot[stones.x, stones.y].pop().remove()  # remove the plot
+                self.play_stone_plot[stones.x, stones.y] = None
+                result.append(get_position2index(stones.x, stones.y))
+            print("被吃子：", result)
+            self.canvas.draw()
+            # send to engine if is_engine is True
+            if is_engine:
+                go_data = {"user_id": "djn", "board": board_index, "current_player": "1"}
+                go_resp = go(go_data)
+                engine_x, engine_y = transform_indexes(go_resp)
+                print(engine_x, engine_y)
+                # 引擎再下一步，is_engine = False
+                self.play(engine_x, engine_y, go_resp, False, self.play_board.get_player())
+        else:
+            print('not allowed to play')
 
     def end_play(self):
         message = QMessageBox.question(self, '', '你确定要认输吗?', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
         if message == QMessageBox.Yes:
             self.save_game_query()
+            self.clear_play_board()
 
     def save_game_query(self):
         message = QMessageBox.question(self, '', '是否存储棋谱？', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -257,7 +273,7 @@ class MainUi(QtWidgets.QMainWindow):
         draw_stars(self.ax_record)
         self.canvas_record.draw()
 
-    # 清空棋盘
+    # 清空复盘的棋盘
     def clear_review_board(self):
         for i in range(20):
             for j in range(20):
@@ -268,6 +284,18 @@ class MainUi(QtWidgets.QMainWindow):
                     self.red_point_plot[i, j].pop().remove()
                     self.red_point_plot[i, j] = None
         self.canvas_record.draw()
+
+    # 清空复盘的棋盘
+    def clear_play_board(self):
+        for i in range(20):
+            for j in range(20):
+                if self.play_stone_plot[i, j] is not None:
+                    self.play_stone_plot[i, j].pop().remove()
+                    self.play_stone_plot[i, j] = None
+                if self.red_point_plot[i, j] is not None:
+                    self.red_point_plot[i, j].pop().remove()
+                    self.red_point_plot[i, j] = None
+        self.canvas.draw()
 
     # 选择一个棋谱的点击事件
     def on_game_click(self, item=None):
@@ -314,7 +342,8 @@ class MainUi(QtWidgets.QMainWindow):
         self.board_review.play(indexes_map[self.game_item_row][self.cur_pointer][0],
                                indexes_map[self.game_item_row][self.cur_pointer][1], player)  # 在棋盘上走棋
         self.board_review.next_player()
-        index_x, index_y = indexes_map[self.game_item_row][self.cur_pointer][0], indexes_map[self.game_item_row][self.cur_pointer][1]
+        index_x, index_y = indexes_map[self.game_item_row][self.cur_pointer][0], \
+                           indexes_map[self.game_item_row][self.cur_pointer][1]
         # print(index_x, index_y)
         self.stones_plot_review[index_x, index_y] = funcs.draw_stone(index_y - 1, 19 - index_x,
                                                                      'k' if player.get_identifier() == 1 else 'w',
@@ -589,7 +618,7 @@ class MainUi(QtWidgets.QMainWindow):
         self.play_setting_layout.addWidget(self.btn_choose_level)
         self.play_setting_layout.addWidget(self.btn_play)
         self.play_setting_layout.addStretch()
-        self.btn_play.clicked.connect(self.begin_play)
+        self.btn_play.clicked.connect(self.press_play)
 
         # 右边 棋谱栏
         self.select_record_widget = QtWidgets.QWidget()  # 创建右侧部件
