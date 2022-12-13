@@ -176,7 +176,9 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
             self.play_stone_plot = np.full((20, 20), None)
             # TODO：串口检测 打开串口
             self.serial_thread = SerialThread()
-            self.serial_thread.port_open()
+            is_open = self.serial_thread.port_open()
+            if is_open is False:
+                return
             self.serial_thread.start()
 
     #  模拟接收串口发来的数据
