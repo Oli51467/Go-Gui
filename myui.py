@@ -176,19 +176,17 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
             self.play_stone_plot = np.full((20, 20), None)
             # TODO：串口检测 打开串口
             self.serial_thread = SerialThread()
-            is_open = self.serial_thread.port_open()
+            is_open = self.serial_thread.port_open(self)
             if is_open is False:
                 return
             self.serial_thread.start()
 
-    #  模拟接收串口发来的数据
-    # def start_play(self):
-    #     index_x, index_y = fake_moves[self.fake_index][0], fake_moves[self.fake_index][1]
-    #     print("行列坐标：", index_x, index_y)
-    #     play_index = get_position2index(index_x, index_y)
-    #     print("棋盘坐标：", play_index)
-    #     player_ = self.play_board.get_player()
-    #     self.play(index_x, index_y, play_index, True, player_)
+    # 模拟接收串口发来的数据
+    def start_play(self, index_x, index_y):
+        play_index = get_position2index(index_x, index_y)
+        print("棋盘坐标：", play_index)
+        player_ = self.play_board.get_player()
+        self.play(index_x, index_y, play_index, True, player_)
 
     # 落子
     def play(self, index_x, index_y, board_index, is_engine, player):
