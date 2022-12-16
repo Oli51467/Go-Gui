@@ -4,7 +4,6 @@ import time
 import serial
 from PyQt5 import QtCore
 
-import myui
 
 
 class SerialThread(QtCore.QThread):
@@ -44,6 +43,7 @@ class SerialThread(QtCore.QThread):
                 # print(com_input.decode('utf-8'))
                 x, y = map(int, com_input.decode('utf-8').split(' '))
                 print(x, y)
+                import myui
                 myui.MainUi.start_play(self.ob, x, y)
 
 
