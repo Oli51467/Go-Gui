@@ -212,7 +212,6 @@ def get_all_moves_and_merge(sgf):
 
 
 def get_info():
-    info = ""
     if PLAYER == 1:
         info = "黑方: " + "djn" + "  " + "白方: " + "KataGo"
     else:

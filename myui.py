@@ -1,17 +1,14 @@
 # coding: utf8
 import numpy as np
-import serial
 import cv2
-import serial.tools.list_ports
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 import qtawesome
-from PyQt5.QtCore import QCoreApplication, QTimer, Qt
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QLabel, QLineEdit, QMessageBox, QAbstractItemView, \
     QTableWidget, QTableWidgetItem, QTextEdit, QWidget
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as fc
-from threads import SerialThread
 
 import db_operation
 import funcs
@@ -30,9 +27,9 @@ fake_moves = [(4, 4)]  # 位置 eg: [(4, 4), (4, 16), (5, 5)]
 fake_index = 0
 # moves_map = []  # 坐标 eg:  [D4, H5, T6]
 info_map = []
-WINDOW_WIDTH, WINDOW_HEIGHT = 820, 480
+WINDOW_WIDTH, WINDOW_HEIGHT = 480, 820
 BUTTON_HEIGHT, BUTTON_WIDTH = 40, 150
-CENTER_HEIGHT, CENTER_WIDTH = 450, 450
+CENTER_HEIGHT, CENTER_WIDTH = 480, 480
 OP_BUTTON_HEIGHT, OP_BUTTON_WIDTH = 50, 180
 OP_ICON_HEIGHT, OP_ICON_WIDTH = 25, 25
 LEVEL_BUTTON_HEIGHT, LEVEL_BUTTON_WIDTH = 50, 65
@@ -160,7 +157,8 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
         print("用户所选等级为:", funcs.LEVEL)
         print("用户执:", "黑" if funcs.PLAYER == 1 else "白")
         # 初始化引擎
-        data = {"user_id": "djn", "rules": "", "komi": "", "play": str(funcs.PLAYER), "level": "p", "boardsize": "19", "initialStones": []}
+        data = {"user_id": "djn", "rules": "", "komi": "", "play": str(funcs.PLAYER), "level": "p", "boardsize": "19",
+                "initialStones": []}
         resp = init_set(data)
         if not resp:
             QMessageBox.critical(self, "错误", "请检查网络连接")
@@ -175,11 +173,11 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
             self.left_button_1.setEnabled(False)
             self.play_stone_plot = np.full((20, 20), None)
             # TODO：串口检测 打开串口
-            self.serial_thread = SerialThread()
-            is_open = self.serial_thread.port_open(self)
-            if is_open is False:
-                return
-            self.serial_thread.start()
+            # self.serial_thread = SerialThread()
+            # is_open = self.serial_thread.port_open(self)
+            # if is_open is False:
+            #     return
+            # self.serial_thread.start()
 
     # 模拟接收串口发来的数据
     def start_play(self, index_x, index_y):
@@ -303,13 +301,13 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
         if item is None:
             return
         else:
-            funcs.ROW_CLICK = item.row()  # 获取行数
+            funcs.ROW_CLICK = item.column()  # 获取行数
             self.game_record_table_view.setVisible(False)
             self.view_record_widget.setVisible(True)
             self.cur_pointer, self.undo_pointer = 0, 0
-            self.game_item_row = item.row()
+            self.game_item_col = item.column()
             self.board_review = Board(WIDTH, WIDTH, 0)
-            self.show_info.setPlainText(info_map[self.game_item_row])
+            self.show_info.setPlainText(info_map[self.game_item_col])
             self.show_info.setAlignment(Qt.AlignLeft)
             self.last_tip_x, self.last_tip_y = 0, 0
             funcs.IS_REVIEW = True
@@ -331,7 +329,7 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
         if self.undo_pointer < self.cur_pointer:
             self.redo()
         else:
-            if self.cur_pointer >= len(indexes_map[self.game_item_row]):
+            if self.cur_pointer >= len(indexes_map[self.game_item_col]):
                 return
             self.proceed()
 
@@ -339,11 +337,10 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
     def proceed(self):
         last_x, last_y = self.board_review.game_record.get_last_turn().x, self.board_review.game_record.get_last_turn().y  # 上一步
         player = self.board_review.get_player()  # 当前玩家
-        self.board_review.play(indexes_map[self.game_item_row][self.cur_pointer][0],
-                               indexes_map[self.game_item_row][self.cur_pointer][1], player)  # 在棋盘上走棋
+        self.board_review.play(indexes_map[self.game_item_col][self.cur_pointer][0],
+                               indexes_map[self.game_item_col][self.cur_pointer][1], player)  # 在棋盘上走棋
         self.board_review.next_player()
-        index_x, index_y = indexes_map[self.game_item_row][self.cur_pointer][0], \
-                           indexes_map[self.game_item_row][self.cur_pointer][1]
+        index_x, index_y = indexes_map[self.game_item_col][self.cur_pointer][0], indexes_map[self.game_item_col][self.cur_pointer][1]
         # print(index_x, index_y)
         self.stones_plot_review[index_x, index_y] = funcs.draw_stone(index_y - 1, 19 - index_x,
                                                                      'k' if player.get_identifier() == 1 else 'w',
@@ -428,7 +425,7 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
             if self.undo_pointer < self.cur_pointer:
                 self.redo()
             else:
-                if self.cur_pointer >= len(indexes_map[self.game_item_row]):
+                if self.cur_pointer >= len(indexes_map[self.game_item_col]):
                     return
                 self.proceed()
 
@@ -447,10 +444,10 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
         # 此时局面的索引是undo_pointer指示的
         if self.undo_pointer < self.cur_pointer:
             tip_data = {"user_id": "djn", "initialStones": [],
-                        "moves": moves_map[self.game_item_row][:self.undo_pointer]}
+                        "moves": moves_map[self.game_item_col][:self.undo_pointer]}
         else:
             tip_data = {"user_id": "djn", "initialStones": [],
-                        "moves": moves_map[self.game_item_row][:self.undo_pointer]}
+                        "moves": moves_map[self.game_item_col][:self.undo_pointer]}
         go_resp = tip(tip_data)
         if go_resp == 0:
             QMessageBox.critical(self, "错误", "请检查网络连接")
@@ -468,7 +465,6 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
             self.last_tip_x, self.last_tip_y = 0, 0
 
     def init_ui(self):
-        self.timer = QTimer(self)
         self.stones_plot_review = np.full((20, 20), None)
         self.red_point_plot = np.full((20, 20), None)
         self.draw_origin_play_board()
@@ -533,31 +529,31 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
         self.left_button_2 = QtWidgets.QPushButton(qtawesome.icon('fa.database', color='#2c3a45'), "棋谱")
         self.left_button_2.setObjectName('game')
 
-        self.left_layout2.addWidget(self.left_button_1, 0, 0, 1, 2)
-        self.left_layout2.addWidget(self.left_button_2, 1, 0, 1, 2)
+        self.left_layout2.addWidget(self.left_button_1, 0, 0, 2, 4)
+        self.left_layout2.addWidget(self.left_button_2, 0, 4, 2, 4)
 
-        self.left_layout3.addWidget(self.index_image, 0, 0, 1, 1)
+        self.left_layout3.addWidget(self.index_image, 0, 8, 1, 1)
 
         self.left_username = QtWidgets.QLabel("Gobot")
         self.left_username.setObjectName('App')
         self.left_out = QtWidgets.QPushButton(qtawesome.icon('fa.sign-out', color='#808080'), "退出")
         self.left_out.setObjectName('left_out')
         self.left_out.clicked.connect(self.close)  # 点击按钮之后关闭窗口
-        self.top_layout.addWidget(self.left_username, 0, 0, 1, 15)
-        self.top_layout.addWidget(self.left_out, 0, 16, 1, 1)
+        self.top_layout.addWidget(self.left_username, 0, 0, 1, 9)
+        self.top_layout.addWidget(self.left_out, 0, 9, 1, 1)
 
         # 中间组件 分开显示
         self.play_widget = QtWidgets.QWidget()  # 创建右侧部件
         self.play_widget.setObjectName('play_widget')
         self.play_layout = QtWidgets.QGridLayout()
         self.play_widget.setLayout(self.play_layout)  # 设置右侧部件布局为网格
-        self.play_layout.addWidget(self.canvas, 0, 0, 7, 7)  # 添加棋盘画布
+        self.play_layout.addWidget(self.canvas, 0, 0, 10, 10)  # 添加棋盘画布
 
         self.game_record_widget = QtWidgets.QWidget()
         self.game_record_widget.setObjectName('game_record_widget')
         self.game_record_layout = QtWidgets.QGridLayout()
         self.game_record_widget.setLayout(self.game_record_layout)  # 设置index部件布局为网格
-        self.game_record_layout.addWidget(self.canvas_record, 0, 0, 7, 7)
+        self.game_record_layout.addWidget(self.canvas_record, 0, 0, 10, 10)
         self.game_record_widget.setVisible(False)  # 默认不显示
 
         # 右边栏 下棋时的按钮
@@ -565,9 +561,9 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
         self.btn_resign = QtWidgets.QPushButton(qtawesome.icon('mdi6.close-box', color='#2c3a45'), "认输")
         self.btn_resign.clicked.connect(lambda: self.end_play())
         self.btn_peace = QtWidgets.QPushButton(qtawesome.icon('ph.handshake-light', color='#2c3a45'), "和棋")
-        self.btn_count.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
-        self.btn_resign.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
-        self.btn_peace.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
+        self.btn_count.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
+        self.btn_resign.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
+        self.btn_peace.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
 
         self.play_func_widget = QtWidgets.QWidget()
         self.play_func_widget.setObjectName('setting_widget')
@@ -579,7 +575,6 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
         self.play_func_widget.setVisible(False)
 
         # 右边栏 下棋前的设置
-        self.label_rules = QLabel("对局设置")
         self.edit_rules = QLineEdit("分先")
         self.edit_rules.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
         self.edit_rules.setReadOnly(True)
@@ -605,19 +600,15 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
 
         self.play_setting_widget = QtWidgets.QWidget()
         self.play_setting_widget.setObjectName('play_setting_widget')
-        self.play_setting_layout = QtWidgets.QVBoxLayout()
-        self.play_setting_layout.setSpacing(13)
-        self.play_setting_layout.setContentsMargins(0, 20, 0, 0)
+        self.play_setting_layout = QtWidgets.QGridLayout()
         self.play_setting_widget.setLayout(self.play_setting_layout)
-        self.play_setting_layout.addWidget(self.label_rules)
-        self.play_setting_layout.addWidget(self.edit_size)
-        self.play_setting_layout.addWidget(self.edit_rules)
-        self.play_setting_layout.addWidget(self.edit_komi)
-        self.play_setting_layout.addWidget(self.btn_choose_black)
-        self.play_setting_layout.addWidget(self.btn_choose_white)
-        self.play_setting_layout.addWidget(self.btn_choose_level)
-        self.play_setting_layout.addWidget(self.btn_play)
-        self.play_setting_layout.addStretch()
+        self.play_setting_layout.addWidget(self.edit_size, 1, 3, 1, 3)
+        self.play_setting_layout.addWidget(self.edit_rules, 1, 6, 1, 3)
+        self.play_setting_layout.addWidget(self.edit_komi, 1, 9, 1, 3)
+        self.play_setting_layout.addWidget(self.btn_choose_black, 2, 4, 1, 3)
+        self.play_setting_layout.addWidget(self.btn_choose_white, 2, 8, 1, 3)
+        self.play_setting_layout.addWidget(self.btn_choose_level, 3, 6, 1, 3)
+        self.play_setting_layout.addWidget(self.btn_play, 4, 6, 1, 3)
         self.btn_play.clicked.connect(self.press_play)
 
         # 右边 棋谱栏
@@ -631,11 +622,11 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
         self.game_record_table_view = QTableWidget()
         self.game_record_table_view.verticalHeader().setVisible(False)
         self.game_record_table_view.horizontalHeader().setVisible(False)
-        self.game_record_table_view.setColumnCount(1)
-        self.game_record_table_view.setRowCount(10)
-        self.game_record_table_view.horizontalHeader().setStretchLastSection(True)
-        self.game_record_table_view.verticalHeader().setDefaultSectionSize(80)
-        self.game_record_table_view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.game_record_table_view.setColumnCount(10)
+        self.game_record_table_view.setRowCount(1)
+        self.game_record_table_view.verticalHeader().setStretchLastSection(True)
+        self.game_record_table_view.horizontalHeader().setDefaultSectionSize(80)
+        self.game_record_table_view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.game_record_table_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.game_record_table_view.itemClicked.connect(self.on_game_click)
         for index in range(len(games)):
@@ -646,15 +637,14 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
             funcs.get_all_moves_and_merge(games[index]['code'])
             # indexes_map.append(funcs.get_all_moves_and_merge(games[index]['code'])[0])
             info_map.append(game_information)
-            self.game_record_table_view.setItem(index, 0, item)
-        # 水平方向标签拓展剩下的窗口部分，填满表格
-        self.game_record_table_view.setFixedWidth(180)
+            self.game_record_table_view.setItem(0, index, item)
+            self.game_record_table_view.setColumnWidth(index, 180)
         self.select_record_layout.addWidget(self.game_record_table_view, 0, 1, 1, 1)
 
         # 右边 查看棋谱 操作前进后退
         self.view_record_widget = QtWidgets.QWidget()  # 创建右侧部件
         self.view_record_widget.setObjectName('view_record_widget')
-        self.view_record_layout = QtWidgets.QVBoxLayout()
+        self.view_record_layout = QtWidgets.QGridLayout()
         self.view_record_widget.setLayout(self.view_record_layout)  # 设置右侧部件布局为网格
         self.view_record_widget.setVisible(False)
 
@@ -696,30 +686,33 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
         self.btn_tip.setFixedSize(OP_BUTTON_WIDTH, OP_BUTTON_HEIGHT)
         self.btn_tip.clicked.connect(self.tip)
 
-        self.view_record_layout.addWidget(self.show_info)
-        self.view_record_layout.addWidget(self.proceed_button)
-        self.view_record_layout.addWidget(self.fast_proceed_button)
-        self.view_record_layout.addWidget(self.undo_button)
-        self.view_record_layout.addWidget(self.fast_undo_button)
-        self.view_record_layout.addWidget(self.btn_tip)
-        self.view_record_layout.addWidget(self.btn_return2record)
-        self.view_record_layout.setContentsMargins(0, 0, 0, 0)
+        q = QLabel()
+        q.setFixedSize(50, 50)
+        self.view_record_layout.addWidget(q, 0, 0, 1, 1)
+        self.view_record_layout.addWidget(self.show_info, 0, 1, 1, 3)
+        self.view_record_layout.addWidget(self.btn_tip, 0, 5, 1, 3)
+        self.view_record_layout.addWidget(self.proceed_button, 1, 1, 1, 3)
+        self.view_record_layout.addWidget(self.fast_proceed_button, 1, 5, 1, 3)
+        self.view_record_layout.addWidget(self.undo_button, 2, 1, 1, 3)
+        self.view_record_layout.addWidget(self.fast_undo_button, 2, 5, 1, 3)
+        self.view_record_layout.addWidget(self.btn_return2record, 3, 3, 1, 3)
+        self.view_record_layout.setContentsMargins(10, 0, 0, 0)
 
-        self.play_widget.setFixedSize(CENTER_HEIGHT, CENTER_WIDTH)
+        self.play_widget.setFixedHeight(CENTER_HEIGHT)
         self.game_record_widget.setFixedSize(CENTER_HEIGHT, CENTER_WIDTH)
 
-        self.left_layout.addWidget(self.left_widget_enter, 0, 0, 3, 2)  # 左侧部件在第0行第0列，占3行3列
-        self.left_layout.addWidget(self.left_widget2, 3, 0, 2, 2)  # 左侧部件在第3行第0列，占2行3列
-        self.left_layout.addWidget(self.left_widget3, 9, 0, 6, 2)  # 左侧部件在第9行第0列，占6行3列
+        self.left_layout.addWidget(self.left_widget_enter, 0, 0, 2, 2)  # 左侧部件在第0行第0列，占3行3列
+        self.left_layout.addWidget(self.left_widget2, 0, 2, 2, 8)  # 左侧部件在第3行第0列，占2行3列
+        # self.left_layout.addWidget(self.left_widget3, 0, 9, 1, 1)  # 左侧部件在第9行第0列，占6行3列
 
-        self.main_layout.addWidget(self.left_widget, 1, 0, 12, 2)  # 左侧部件在第1行第0列，占12行2列
-        self.main_layout.addWidget(self.play_widget, 1, 2, 12, 7)  # 右侧部件在第1行第3列，占12行9列
-        self.main_layout.addWidget(self.game_record_widget, 1, 2, 12, 7)  # 右侧部件在第1行第2列，占12行9列
-        self.main_layout.addWidget(self.play_func_widget, 1, 9, 12, 3)
-        self.main_layout.addWidget(self.play_setting_widget, 1, 9, 12, 3)
-        self.main_layout.addWidget(self.select_record_widget, 1, 9, 12, 3)
-        self.main_layout.addWidget(self.view_record_widget, 1, 9, 12, 3)
-        self.main_layout.addWidget(self.top_widget, 0, 0, 1, 12)  # 头部侧部件在第0行第0列，占1行11列
+        self.main_layout.addWidget(self.top_widget, 0, 0, 1, 10)  # 头部侧部件在第0行第0列，占1行11列
+        self.main_layout.addWidget(self.left_widget, 1, 0, 2, 10)  # 左侧部件在第1行第0列，占12行2列
+        self.main_layout.addWidget(self.play_widget, 3, 0, 10, 10)  # 右侧部件在第1行第3列，占12行9列
+        self.main_layout.addWidget(self.game_record_widget, 3, 0, 10, 10)  # 右侧部件在第1行第2列，占12行9列
+        self.main_layout.addWidget(self.play_func_widget, 13, 0, 5, 10)
+        self.main_layout.addWidget(self.play_setting_widget, 13, 0, 5, 10)
+        self.main_layout.addWidget(self.select_record_widget, 13, 0, 5, 10)
+        self.main_layout.addWidget(self.view_record_widget, 13, 0, 5, 10)
         self.setCentralWidget(self.main_widget)  # 设置窗口主部件
 
         self.left_layout.setVerticalSpacing(0)
