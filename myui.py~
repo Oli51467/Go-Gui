@@ -27,9 +27,9 @@ fake_moves = [(4, 4)]  # 位置 eg: [(4, 4), (4, 16), (5, 5)]
 fake_index = 0
 # moves_map = []  # 坐标 eg:  [D4, H5, T6]
 info_map = []
-WINDOW_WIDTH, WINDOW_HEIGHT = 480, 800
+WINDOW_WIDTH, WINDOW_HEIGHT = 480, 750
 BUTTON_HEIGHT, BUTTON_WIDTH = 40, 150
-CENTER_HEIGHT, CENTER_WIDTH = 480, 480
+CENTER_HEIGHT, CENTER_WIDTH = 400, 400
 OP_BUTTON_HEIGHT, OP_BUTTON_WIDTH = 50, 180
 OP_ICON_HEIGHT, OP_ICON_WIDTH = 25, 25
 LEVEL_BUTTON_HEIGHT, LEVEL_BUTTON_WIDTH = 50, 65
@@ -56,7 +56,7 @@ class ChooseLevelWindow(QWidget):
         png = QtGui.QPixmap(image)
         self.label_image.setScaledContents(True)  # 需要在图片显示之前进行设置
         self.label_image.setPixmap(png)
-        self.label_image.setFixedSize(150, 150)
+        self.label_image.setFixedSize(350, 350)
 
         self.right_widget = QtWidgets.QWidget()  # 右侧部件
         self.right_widget.setObjectName('right_layout')
@@ -130,7 +130,7 @@ class ChooseLevelWindow(QWidget):
 
         self.main_layout.addWidget(self.label_image, 0, 0, 1, 1)
         self.main_layout.addWidget(self.right_widget, 0, 1, 1, 1)
-        self.setFixedSize(480, 480)
+        self.setFixedSize(700, 350)
         self.setLayout(self.main_layout)
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint)
 
@@ -679,7 +679,7 @@ class MainUi(QtWidgets.QMainWindow, QtCore.QThread):
         # 对局信息展示
         self.show_info = QTextEdit()
         self.show_info.setFontPointSize(13)
-        self.show_info.setFixedSize(200, 60)
+        self.show_info.setFixedSize(180, 70)
         self.show_info.setReadOnly(True)
         # 提示一手按钮
         self.btn_tip = QtWidgets.QPushButton(qtawesome.icon('mdi.language-go', color='#2c3a45'), "AI选点")
